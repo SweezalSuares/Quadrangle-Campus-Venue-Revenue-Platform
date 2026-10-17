@@ -16,9 +16,8 @@ function venueImageSource(v) {
 }
 
 function buildVenueShareUrl(venueId) {
-  const url = new URL(window.location.href);
+  const url = new URL(window.location.pathname, window.location.origin);
   url.searchParams.set('venue', venueId);
-  url.hash = '';
   return url.toString();
 }
 
@@ -40,7 +39,7 @@ export function venueCardHtml(v, u) {
   const canManage = u.role === 'manager' || u.role === 'admin';
   const canEditVenue = u.role === 'admin';
   const imageSrc = venueImageSource(v);
-  return `<div class="card venue-card" onclick="openVenueDetails('${v._id}')">
+  return `<div class="card venue-card" role="group" tabindex="0" aria-label="${v.name}; open venue details" onclick="openVenueDetails('${v._id}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();openVenueDetails('${v._id}')}">
     <img class="venue-img" src="${imageSrc}" alt="${v.name}" onerror="this.src='https://picsum.photos/seed/fallback/640/400'">
     <div class="venue-body">
       <div class="venue-cat">${v.category}</div>
@@ -196,11 +195,12 @@ window.shareVenue = async function shareVenue(venueId) {
       toast('Venue link shared.');
       return;
     }
+    if (!navigator.clipboard) throw new Error('Link sharing is unavailable in this browser.');
     await navigator.clipboard.writeText(shareUrl);
     toast('Venue link copied to your clipboard.');
   } catch (err) {
     if (err && err.name !== 'AbortError') {
-      toast('Unable to share venue details right now.');
+      toast(err.message || 'Unable to share venue details right now.');
     }
   }
 };
@@ -254,15 +254,29 @@ window.deleteVenue = async function deleteVenue(venueId) {
 let draft = {};
 
 window.openBooking = async function openBooking(venueId) {
-  const { venues } = await api.venues.list();
-  const v = venues.find((x) => x._id === venueId);
-  draft = { venueId, date: todayStr(), start: '18:00', end: '20:00' };
+  let v;
+  try {
+    const { venues } = await api.venues.list();
+    v = venues.find((x) => x._id === venueId);
+  } catch (err) {
+    toast(err.message);
+    return;
+  }
+  if (!v) {
+    toast('This venue is no longer available for booking.');
+    return;
+  }
+  draft = { venueId, date: todayStr(), start: '18:00', end: '20:00', purpose: '' };
   await renderBookingModal(v);
-};
+}
 
 function toMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0); }
 
 async function renderBookingModal(v) {
+  if (!v) {
+    toast('This venue is no longer available for booking.');
+    return;
+  }
   const d = draft;
   let quote;
   try {
@@ -276,7 +290,7 @@ async function renderBookingModal(v) {
   if (quote.conflict && quote.suggestions) {
     const { conflictWith, openSlots, alternateVenues } = quote.suggestions;
     conflictHtml = `<div class="notice bad"><b>Conflict detected:</b> this venue is already booked ${conflictWith.start}–${conflictWith.end} that day.</div>
-    ${openSlots.length ? `<div class="small-muted" style="margin-bottom:6px;">Suggested open slots at this venue:</div><div style="margin-bottom:10px;">${openSlots.map((s) => `<span class="slot-chip" onclick="pickSlot('${s.start}','${s.end}')">${s.start} – ${s.end}</span>`).join('')}</div>` : ''}
+    ${openSlots.length ? `<div class="small-muted" style="margin-bottom:6px;">Suggested open slots at this venue:</div><div style="margin-bottom:10px;">${openSlots.map((s) => `<button class="slot-chip" type="button" onclick="pickSlot('${s.start}','${s.end}')">${s.start} – ${s.end}</button>`).join('')}</div>` : ''}
     ${alternateVenues.length ? `<div class="small-muted" style="margin-bottom:6px;">Or consider a similar venue:</div>${alternateVenues.map((a) => `<div class="small-muted">• ${a.name} (cap. ${a.capacity}) — <a href="#" onclick="event.preventDefault();openBooking('${a.id}')">view</a></div>`).join('')}` : ''}`;
   }
 
@@ -284,21 +298,26 @@ async function renderBookingModal(v) {
   <div class="modal-head"><h3>${v.name}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
   <div class="small-muted" style="margin-bottom:14px;">${v.category} · Capacity ${v.capacity} · In-charge: ${v.incharge}</div>
   <div><span class="step-num">1</span><b>Choose date & time</b></div>
-  <div class="grid2" style="margin-top:10px;">
-    <div class="field"><label>Date</label><input id="bk-date" type="date" value="${d.date}" min="${todayStr()}"></div>
-    <div class="field"><label>Purpose</label><input id="bk-purpose" placeholder="e.g. Workshop, product launch"></div>
-    <div class="field"><label>Start time</label><input id="bk-start" type="time" value="${d.start}"></div>
-    <div class="field"><label>End time</label><input id="bk-end" type="time" value="${d.end}"></div>
-  </div>
-  ${conflictHtml}
-  <hr class="div">
-  <div><span class="step-num">2</span><b>AI dynamic price</b> <span class="badge ${quote.demand}" style="margin-left:6px;">${quote.demand} demand</span></div>
-  <div class="price-live">${money(quote.price)}</div>
-  <div class="small-muted">Base ${money(v.basePrice)} · adjusted for day, time slot and current demand at this venue.</div>
-  <hr class="div">
-  <button class="btn brass block" id="bk-submit" ${quote.conflict ? 'disabled' : ''}>Submit booking request</button>
-  <div class="small-muted" style="margin-top:8px;">Facility management reviews requests and confirms availability before payment.</div>`);
+  <form id="booking-request-form">
+    <div class="grid2" style="margin-top:10px;">
+      <div class="field"><label for="bk-date">Date</label><input id="bk-date" type="date" value="${d.date}" min="${todayStr()}" required></div>
+      <div class="field"><label for="bk-purpose">Purpose</label><input id="bk-purpose" placeholder="e.g. Workshop, product launch"></div>
+      <div class="field"><label for="bk-start">Start time</label><input id="bk-start" type="time" value="${d.start}" required></div>
+      <div class="field"><label for="bk-end">End time</label><input id="bk-end" type="time" value="${d.end}" required></div>
+    </div>
+    ${conflictHtml}
+    <hr class="div">
+    <div><span class="step-num">2</span><b>AI dynamic price</b> <span class="badge ${quote.demand}" style="margin-left:6px;">${quote.demand} demand</span></div>
+    <div class="price-live">${money(quote.price)}</div>
+    <div class="small-muted">Base ${money(v.basePrice)} · adjusted for day, time slot and current demand at this venue.</div>
+    <hr class="div">
+    <button class="btn brass block" id="bk-submit" type="submit" ${quote.conflict ? 'disabled' : ''}>Submit booking request</button>
+    <div class="small-muted" style="margin-top:8px;">Facility management reviews requests and confirms availability before payment.</div>
+  </form>`);
 
+  const purposeInput = document.getElementById('bk-purpose');
+  purposeInput.value = d.purpose || '';
+  purposeInput.addEventListener('input', () => { d.purpose = purposeInput.value; });
   ['bk-date', 'bk-start', 'bk-end'].forEach((id) => {
     document.getElementById(id).addEventListener('change', async () => {
       draft.date = document.getElementById('bk-date').value;
@@ -307,26 +326,38 @@ async function renderBookingModal(v) {
       await renderBookingModal(v);
     });
   });
-  const submitBtn = document.getElementById('bk-submit');
-  if (submitBtn) submitBtn.addEventListener('click', () => submitBooking(v));
+  document.getElementById('booking-request-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    submitBooking(v);
+  });
 }
 
 window.pickSlot = async function pickSlot(s, e) {
   draft.start = s; draft.end = e;
-  const { venues } = await api.venues.list();
-  const v = venues.find((x) => x._id === draft.venueId);
-  await renderBookingModal(v);
+  try {
+    const { venues } = await api.venues.list();
+    const v = venues.find((x) => x._id === draft.venueId);
+    await renderBookingModal(v);
+  } catch (err) {
+    toast(err.message);
+  }
 };
 
 async function submitBooking(v) {
-  const purpose = document.getElementById('bk-purpose').value.trim() || 'Not specified';
+  const purpose = (draft.purpose || '').trim() || 'Not specified';
+  if (!draft.date || !draft.start || !draft.end) { toast('Choose a date, start time and end time.'); return; }
   if (toMin(draft.end) <= toMin(draft.start)) { toast('End time must be after start time.'); return; }
+  const submitButton = document.getElementById('bk-submit');
+  submitButton.disabled = true;
+  submitButton.textContent = 'Submitting request…';
   try {
     await api.bookings.create({ venueId: v._id, date: draft.date, start: draft.start, end: draft.end, purpose });
     closeModal();
     toast('Booking request submitted.');
     window.goTo('bookings');
   } catch (err) {
+    submitButton.disabled = false;
+    submitButton.textContent = 'Submit booking request';
     toast(err.message);
   }
 }

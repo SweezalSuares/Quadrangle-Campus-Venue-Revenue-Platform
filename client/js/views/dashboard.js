@@ -26,6 +26,10 @@ function renderSafeChart(canvasId, config, fallbackText) {
 
 export async function renderDashboard(main) {
   const u = state.user;
+  if (!u) {
+    main.innerHTML = '<div class="notice bad">Your session has expired. Please log in again.</div>';
+    return;
+  }
   const unread = await unreadCount();
 
   if (u.role === 'external' || u.role === 'club') {
@@ -33,8 +37,9 @@ export async function renderDashboard(main) {
     const pending = bookings.filter((b) => b.status === 'pending').length;
     const approved = bookings.filter((b) => b.status === 'approved').length;
     const spend = bookings.filter((b) => b.paymentStatus === 'paid').reduce((s, b) => s + b.price, 0);
-    const upcoming = bookings.filter((b) => b.status === 'approved' && b.date >= todayStr())
-      .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
+    const recentBookings = [...bookings]
+      .sort((a, b) => new Date(b.createdAt || `${b.date}T00:00:00`) - new Date(a.createdAt || `${a.date}T00:00:00`))
+      .slice(0, 4);
     const { venues } = await api.venues.list({ minCapacity: u.role === 'club' ? 40 : 80 });
 
     main.innerHTML = topbarHtml(`Welcome back, ${u.name.split(' ')[0]}`, 'Your workspace', unread) + `
@@ -45,8 +50,8 @@ export async function renderDashboard(main) {
       <div class="stat-card"><b>${money(spend)}</b><span>Paid to date</span></div>
     </div>
     <div class="section">
-      <div class="section-head"><h3>Your upcoming reservations</h3><button class="link-btn" onclick="goTo('bookings')">View all →</button></div>
-      <div class="card panel-pad">${upcoming.length ? upcoming.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">Nothing booked yet — browse venues to get started.</div>'}</div>
+      <div class="section-head"><h3>Your recent bookings</h3><button class="link-btn" onclick="goTo('bookings')">View all →</button></div>
+      <div class="card panel-pad">${recentBookings.length ? recentBookings.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">Nothing booked yet — browse venues to get started.</div>'}</div>
     </div>
     <div class="section">
       <div class="section-head"><h3>Recommended for you</h3><span class="small-muted">Matched on capacity fit</span></div>
@@ -80,7 +85,7 @@ export async function renderDashboard(main) {
     <div class="section">
       <div class="section-head"><h3>Today & upcoming</h3></div>
       <div class="card panel-pad">${upcoming.length ? `<table><thead><tr><th>Venue</th><th>Date</th><th>Time</th><th>Booked by</th><th>Payment</th></tr></thead><tbody>
-      ${upcoming.map((b) => `<tr><td>${b.venue.name}</td><td>${fmtDate(b.date)}</td><td>${b.start}–${b.end}</td><td>${b.user.name}</td><td><span class="badge ${b.paymentStatus}">${b.paymentStatus}</span></td></tr>`).join('')}
+      ${upcoming.map((b) => `<tr><td>${b.venue?.name || 'Venue no longer available'}</td><td>${fmtDate(b.date)}</td><td>${b.start}–${b.end}</td><td>${b.user?.name || 'Former user'}</td><td><span class="badge ${b.paymentStatus}">${b.paymentStatus}</span></td></tr>`).join('')}
       </tbody></table>` : '<div class="empty-state">No confirmed bookings on the calendar yet.</div>'}</div>
     </div>`;
     return;
@@ -93,6 +98,9 @@ export async function renderDashboard(main) {
       api.analytics.roleSplit(),
       api.bookings.list('all'),
     ]);
+    const latestActivity = [...recent]
+      .sort((a, b) => new Date(b.createdAt || `${b.date}T00:00:00`) - new Date(a.createdAt || `${a.date}T00:00:00`))
+      .slice(0, 6);
     main.innerHTML = topbarHtml('System overview', 'Users, venues, bookings and platform health', unread) + `
     <div class="stat-row">
       <div class="stat-card"><b>${summary.totalUsers}</b><span>Registered users</span></div>
@@ -106,7 +114,7 @@ export async function renderDashboard(main) {
     </div>
     <div class="section">
       <div class="section-head"><h3>Recent activity</h3></div>
-      <div class="card panel-pad">${recent.slice(-6).reverse().map((b) => bookingRowHtml(b, u)).join('<hr class="div">')}</div>
+      <div class="card panel-pad">${latestActivity.length ? latestActivity.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">No bookings have been made yet.</div>'}</div>
     </div>`;
 
     renderSafeChart('chart-admin-rev', {
@@ -119,5 +127,8 @@ export async function renderDashboard(main) {
       data: { labels: ['Student club', 'External client'], datasets: [{ data: [club, external], backgroundColor: ['#2F6F4E', '#A6402A'] }] },
       options: { plugins: { legend: { position: 'bottom' } } },
     }, 'Split chart is unavailable right now.');
+    return;
   }
+
+  main.innerHTML = '<div class="notice bad">This account does not have a dashboard role.</div>';
 }

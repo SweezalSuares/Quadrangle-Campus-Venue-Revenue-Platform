@@ -33,6 +33,7 @@ export const api = {
     me: () => request('/auth/me'),
   },
   venues: {
+    shared: (id) => request(`/venues/share/${encodeURIComponent(id)}`, { auth: false }),
     list: (params = {}) => {
       const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v != null));
       const q = qs.toString();

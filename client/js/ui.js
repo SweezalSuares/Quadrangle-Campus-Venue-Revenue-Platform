@@ -7,7 +7,10 @@ export function fmtDate(d) {
 
 export function money(n) { return `₹${Number(n || 0).toLocaleString('en-IN')}`; }
 
-export function todayStr() { return new Date().toISOString().slice(0, 10); }
+export function todayStr() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 
 export function toast(msg) {
   const host = document.getElementById('toast-host');
@@ -18,13 +21,22 @@ export function toast(msg) {
   setTimeout(() => el.remove(), 3200);
 }
 
+let previousModalFocus = null;
+
 export function showModal(html) {
-  document.getElementById('modal-box').innerHTML = html;
+  previousModalFocus = document.activeElement;
+  const box = document.getElementById('modal-box');
+  box.innerHTML = html;
+  const title = box.querySelector('h3');
+  if (title && !title.id) title.id = 'modal-title';
   document.getElementById('modal-overlay').classList.add('active');
+  box.focus();
 }
 export function closeModal() {
   document.getElementById('modal-overlay').classList.remove('active');
   document.getElementById('modal-box').innerHTML = '';
+  if (previousModalFocus && previousModalFocus.isConnected) previousModalFocus.focus();
+  previousModalFocus = null;
 }
 
 export function topbarHtml(title, sub, unread) {

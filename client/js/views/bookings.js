@@ -12,8 +12,9 @@ async function unreadCount() {
 
 function actionButtons(b, u) {
   let btns = '';
-  const isOwner = b.user._id === u.id || b.user === u.id;
-  const canManage = u.role === 'manager' || u.role === 'admin';
+  const bookingUserId = b.user && typeof b.user === 'object' ? b.user._id : b.user;
+  const isOwner = Boolean(u && bookingUserId && String(bookingUserId) === String(u.id));
+  const canManage = u && (u.role === 'manager' || u.role === 'admin');
   if (canManage && b.status === 'pending') {
     btns += `<button class="btn small outline" onclick="setStatus('${b._id}','approved')">Approve</button><button class="btn small danger" onclick="setStatus('${b._id}','rejected')">Reject</button>`;
   }
@@ -33,13 +34,17 @@ function actionButtons(b, u) {
 }
 
 export function bookingRowHtml(b, u) {
-  const canManage = u.role === 'manager' || u.role === 'admin';
+  const canManage = u && (u.role === 'manager' || u.role === 'admin');
+  const venue = b.venue && typeof b.venue === 'object' ? b.venue : {};
+  const bookingUser = b.user && typeof b.user === 'object' ? b.user : {};
+  const venueName = venue.name || 'Venue no longer available';
+  const userName = bookingUser.name || 'Former user';
   return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
     <div style="display:flex;gap:10px;align-items:center;">
-      <img class="venue-thumb-sm" src="${imgUrl(b.venue.imageSeed)}" onerror="this.src='https://picsum.photos/seed/fallback/80/80'">
+      <img class="venue-thumb-sm" src="${imgUrl(venue.imageSeed || 'venue')}" alt="">
       <div>
-        <div style="font-weight:600;">${b.venue.name}</div>
-        <div class="small-muted">${fmtDate(b.date)} · ${b.start}–${b.end} ${canManage ? `· ${b.user.name} (${b.userRole})` : ''}</div>
+        <div style="font-weight:600;">${venueName}</div>
+        <div class="small-muted">${fmtDate(b.date)} · ${b.start}–${b.end} ${canManage ? `· ${userName} (${b.userRole})` : ''}</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
@@ -53,6 +58,10 @@ export function bookingRowHtml(b, u) {
 
 export async function renderBookings(main) {
   const u = state.user;
+  if (!u) {
+    main.innerHTML = '<div class="notice bad">Your session has expired. Please log in again.</div>';
+    return;
+  }
   const canManage = u.role === 'manager' || u.role === 'admin';
   const unread = await unreadCount();
   const tab = state.currentTab.bookings || 'all';
@@ -95,10 +104,15 @@ window.openPayment = async function openPayment(bookingId) {
   try {
     const { bookings } = await api.bookings.list('all');
     const b = bookings.find((x) => x._id === bookingId);
+    if (!b) {
+      toast('This booking could not be found.');
+      return;
+    }
     const qr = await api.bookings.paymentQr(bookingId);
+    const venueName = b.venue?.name || 'Venue no longer available';
     showModal(`
     <div class="modal-head"><h3>${b.paymentStatus === 'paid' ? 'Payment receipt' : 'Complete payment'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
-    <div class="small-muted">${b.venue.name} · ${fmtDate(b.date)} · ${b.start}–${b.end}</div>
+    <div class="small-muted">${venueName} · ${fmtDate(b.date)} · ${b.start}–${b.end}</div>
     <div class="price-live" style="margin-top:10px;">${money(b.price)}</div>
     <div class="qr-wrap"><img src="${qr.dataUrl}" alt="Payment QR code" width="180" height="180"></div>
     <div class="small-muted" style="text-align:center;">Scan with any UPI app to pay booking charges to Quadrangle Campus Facilities.</div>

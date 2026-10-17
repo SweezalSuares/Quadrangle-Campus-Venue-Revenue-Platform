@@ -15,9 +15,21 @@ export function loadSession() {
   const token = localStorage.getItem('quadrangle_token');
   const userRaw = localStorage.getItem('quadrangle_user');
   if (token && userRaw) {
-    state.user = JSON.parse(userRaw);
-    return true;
+    try {
+      const user = JSON.parse(userRaw);
+      if (!user || typeof user !== 'object' || typeof user.name !== 'string' ||
+          typeof user.role !== 'string' || !(user.id || user._id)) {
+        clearSession();
+        return false;
+      }
+      state.user = user;
+      return true;
+    } catch (_) {
+      clearSession();
+      return false;
+    }
   }
+  clearSession();
   return false;
 }
 

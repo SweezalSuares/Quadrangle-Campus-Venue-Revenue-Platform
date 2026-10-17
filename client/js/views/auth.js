@@ -70,4 +70,6 @@ export function mountAuth(onSuccess) {
       showError(err.message);
     }
   });
+
+  return setTab;
 }
