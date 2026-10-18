@@ -1,0 +1,213 @@
+x<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quadrangle — Campus Venue & Revenue Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div id="landing-loader" role="status" aria-live="polite">
+  <div class="loader-mark">Q</div>
+  <p>Quadrangle</p>
+  <span>Making room for what’s next</span>
+  <div class="loader-track"><i></i></div>
+</div>
+
+<!-- ================= PUBLIC LANDING PAGE ================= -->
+<div id="landing-screen">
+  <header class="landing-header">
+    <a class="landing-brand" href="#home" aria-label="Quadrangle home">Quad<span>rangle</span></a>
+    <nav class="landing-nav" aria-label="Main navigation">
+      <a href="#opportunity">Opportunity</a>
+      <a href="#place">Spaces</a>
+      <a href="#solutions">Solutions</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#benefits">Benefits</a>
+    </nav>
+    <div class="landing-actions">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode"><span aria-hidden="true">☾</span><span class="theme-label">Dark mode</span></button>
+      <button class="landing-login" type="button" data-auth-tab="login">Log in</button>
+      <button class="landing-register" type="button" data-auth-tab="register">Register</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="landing-hero" id="home">
+      <div class="landing-hero-copy">
+        <p class="eyebrow">Smart campus infrastructure</p>
+        <h1>Make every campus space work harder.</h1>
+        <p class="landing-lede">Quadrangle connects available campus venues with the people who need them. Discover spaces, simplify bookings and make better use of every hour.</p>
+        <div class="landing-hero-actions">
+          <button class="landing-register" type="button" data-auth-tab="register">Explore venue opportunities <span aria-hidden="true">→</span></button>
+          <a class="landing-secondary" href="#solutions">Discover the solution</a>
+        </div>
+        <div class="landing-metrics" aria-label="Quadrangle platform highlights">
+          <div><strong>24/7</strong><span>Venue visibility</span></div>
+          <div><strong>AI</strong><span>Pricing assistance</span></div>
+          <div><strong>0</strong><span>Avoidable conflicts</span></div>
+          <div><strong>1</strong><span>Connected workflow</span></div>
+        </div>
+      </div>
+      <div class="landing-hero-media">
+        <video class="landing-hero-video" id="landing-hero-video" autoplay muted loop playsinline preload="metadata" poster="/main1.jpg" aria-label="Campus auditorium and event spaces">
+          <source src="/audi%20venue.mp4" type="video/mp4">
+        </video>
+        <div class="hero-video-shade"></div>
+        <div class="hero-video-caption"><span class="availability-dot"></span> Space for what’s next</div>
+        <button class="hero-video-toggle" id="hero-video-toggle" type="button" aria-pressed="true" aria-label="Pause campus video">Ⅱ</button>
+      </div>
+    </section>
+
+    <section class="landing-section opportunity-section" id="opportunity">
+      <div class="section-intro">
+        <p class="eyebrow">The opportunity</p>
+        <h2>Your campus has more capacity than your calendar shows.</h2>
+        <p>Auditoriums, seminar halls, sports facilities, studios and specialized spaces can sit empty outside peak academic hours. Meanwhile, external organizations search for affordable venues and student clubs navigate slow manual approvals.</p>
+      </div>
+      <div class="opportunity-grid">
+        <article class="opportunity-card"><span>01</span><h3>Underused spaces</h3><p>High-value facilities can remain idle during evenings, weekends and academic breaks.</p></article>
+        <article class="opportunity-card"><span>02</span><h3>Manual coordination</h3><p>Messages, spreadsheets and disconnected calendars create avoidable booking friction.</p></article>
+        <article class="opportunity-card"><span>03</span><h3>Missed value</h3><p>Without demand-aware pricing, available infrastructure may not generate its full potential.</p></article>
+      </div>
+    </section>
+
+    <section id="place" class="campus-gallery" aria-labelledby="campus-gallery-title">
+      <div class="gallery-heading"><p class="eyebrow">A place for every possibility</p><h2 id="campus-gallery-title">Campus spaces, ready for more.</h2></div>
+      <div class="gallery-grid">
+        <figure class="gallery-photo gallery-photo-main"><img src="/main1.jpg" alt="Campus event space ready to host a gathering" loading="lazy"><figcaption>Gather, create, celebrate.</figcaption></figure>
+        <figure class="gallery-photo"><img src="/main%20audi.png" alt="Auditorium prepared for a campus event" loading="lazy"><figcaption>Ideas take the stage.</figcaption></figure>
+        <figure class="gallery-photo"><img src="/seminarhall.jpg" alt="Seminar hall arranged for learning and collaboration" loading="lazy"><figcaption>Room to learn together.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="landing-section solutions-section" id="solutions">
+      <div class="section-intro centered-intro">
+        <p class="eyebrow">What the system does</p>
+        <h2>Intelligence behind every reservation.</h2>
+        <p>Designed around the real needs of facility teams, external partners and student organizations.</p>
+      </div>
+      <div class="solutions-grid">
+        <article class="solution-card"><span>01</span><h3>AI Dynamic Pricing</h3><p>Suggest rental rates using demand, timing, venue type, duration and utilization patterns.</p></article>
+        <article class="solution-card"><span>02</span><h3>Conflict Detection</h3><p>Identify overlapping schedules, blocked periods, capacity problems and venue clashes before confirmation.</p></article>
+        <article class="solution-card"><span>03</span><h3>Streamlined Club Booking</h3><p>Let student officers find spaces, check availability and submit requests without unnecessary back-and-forth.</p></article>
+        <article class="solution-card"><span>04</span><h3>Revenue Optimization</h3><p>Help finance teams understand demand and unused capacity to create additional value.</p></article>
+        <article class="solution-card"><span>05</span><h3>Centralized Management</h3><p>Bring venues, schedules, inquiries, pricing and utilization insights into one coordinated workflow.</p></article>
+        <article class="solution-card"><span>06</span><h3>Utilization Analytics</h3><p>Track demand, popular venues, peak periods and booking patterns for better campus planning.</p></article>
+      </div>
+    </section>
+
+    <section class="process-section" id="how-it-works">
+      <div class="process-inner">
+        <div class="process-intro"><p class="eyebrow">Our process</p><h2>From available space to smarter booking.</h2><p>A connected journey helps turn available campus space into a clear, coordinated reservation.</p></div>
+        <div class="process-steps">
+          <article><span>01</span><div><h3>Discover</h3><p>Browse venues by type, capacity, timing and availability.</p></div></article>
+          <article><span>02</span><div><h3>Evaluate</h3><p>AI-assisted pricing considers demand and booking conditions.</p></div></article>
+          <article><span>03</span><div><h3>Validate</h3><p>Conflict checks flag schedule and capacity issues.</p></div></article>
+          <article><span>04</span><div><h3>Confirm</h3><p>The appropriate team completes the reservation workflow.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section benefits-section" id="benefits">
+      <div class="section-intro"><p class="eyebrow">Why Quadrangle?</p><h2>Benefits for the entire campus.</h2></div>
+      <div class="benefits-grid">
+        <article><span>FOR STUDENTS</span><h3>Find room for your next idea.</h3><p>Easier access to spaces for clubs, events, workshops and student activities.</p></article>
+        <article><span>FOR ADMINISTRATORS</span><h3>See the whole schedule.</h3><p>Better visibility of bookings, schedules and campus resource utilization.</p></article>
+        <article><span>FOR UNIVERSITIES</span><h3>Make more of what you have.</h3><p>Improved space utilization and potential additional revenue from unused facilities.</p></article>
+      </div>
+    </section>
+
+    <section class="contact-section" id="contact">
+      <div><p class="eyebrow">Contact &amp; inquiry</p><h2>Tell us what you need.</h2><p>Connect with your campus facilities team to learn more about venue access and campus partnerships.</p></div>
+      <div class="contact-details"><span>GENERAL INQUIRIES</span><button type="button" data-auth-tab="register">Create an account to get started <span aria-hidden="true">→</span></button><span>FACILITIES TEAM</span><p>Campus Infrastructure &amp; Partnerships Office</p></div>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <a class="landing-brand" href="#home">Quad<span>rangle</span></a>
+    <p>Intelligent campus infrastructure management that connects available spaces with the people who need them.</p>
+    <div><span>© Quadrangle. All rights reserved.</span><span>Smart infrastructure · Better utilization · Sustainable growth</span></div>
+  </footer>
+</div>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="auth-screen" style="display:none;">
+  <button class="auth-back" id="auth-back" type="button">← Back to Quadrangle</button>
+  <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode"><span aria-hidden="true">☾</span><span class="theme-label">Dark mode</span></button>
+  <div id="auth-visual">
+    <div>
+      <div class="brand-mark">Quad<span>rangle</span></div>
+      <div class="auth-headline" style="margin-top:70px;">Every empty hour on campus is a booking someone else needs — or revenue you're leaving on the table.</div>
+      <p class="auth-sub">Quadrangle turns unused lecture halls, courts and auditoriums into a managed marketplace — priced by real demand, cleared of conflicts by AI, and open to clubs and outside partners alike.</p>
+    </div>
+    <div class="auth-stats">
+      <div class="auth-stat"><b>10</b><span>Venues live</span></div>
+      <div class="auth-stat"><b>4</b><span>Roles supported</span></div>
+      <div class="auth-stat"><b>MERN</b><span>Full stack</span></div>
+    </div>
+  </div>
+  <div id="auth-form-wrap">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login">Log in</button>
+        <button class="auth-tab" id="tab-register">Register</button>
+      </div>
+      <div id="auth-error"></div>
+
+      <form id="login-panel" autocomplete="on">
+        <div class="field"><label>Email</label><input id="li-email" type="email" placeholder="you@christuniversity.in" autocomplete="username"></div>
+        <div class="field"><label>Password</label><input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+        <button type="submit" class="btn block">Log in</button>
+        <p class="auth-hint">
+        <a href="#" data-demo="admin@christuniversity.in:admin123">System Admin — admin123</a><br>
+        <a href="#" data-demo="manager@christuniversity.in:manager123">Facility Manager — manager123</a><br>
+        <a href="#" data-demo="club@christuniversity.in:club123">Student Club — club123</a><br>
+        <a href="#" data-demo="client@example.com:client123">External Client — client123</a></p>
+      </form>
+
+      <form id="register-panel" style="display:none;">
+        <div class="field"><label>Full name</label><input id="rg-name" placeholder="Jordan Fernandes"></div>
+        <div class="field"><label>Email</label><input id="rg-email" type="email" placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input id="rg-pass" type="password" placeholder="Create a password (min 6 chars)"></div>
+        <div class="field">
+          <label>I'm registering as</label>
+          <div class="role-grid" id="role-grid">
+            <button type="button" class="role-pick active" data-role="external">External Client<br><span class="small-muted">Book venues for outside events</span></button>
+            <button type="button" class="role-pick" data-role="club">Student Club Officer<br><span class="small-muted">Reserve for club activities</span></button>
+            <button type="button" class="role-pick" data-role="manager">Facility / Finance<br><span class="small-muted">Manage venues & revenue</span></button>
+            <button type="button" class="role-pick" data-role="admin">Campus Admin<br><span class="small-muted">Full system access</span></button>
+          </div>
+        </div>
+        <button type="submit" class="btn block brass">Create account</button>
+        <p class="auth-hint">Data is stored in your own MongoDB instance via the Quadrangle API — this is a real persisted account.</p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app-shell">
+  <div id="sidebar">
+    <div class="brand-mark">Quad<span>rangle</span></div>
+    <div class="role-badge" id="role-badge-label">ROLE</div>
+    <div class="nav-group" id="nav-group"></div>
+    <div id="sidebar-bottom">
+      <div class="user-chip"><div class="avatar" id="avatar-init">A</div><div><div id="side-user-name" style="color:#fff;">—</div><div id="side-user-role" style="font-size:11px;">—</div></div></div>
+      <button class="btn outline small block app-theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode"><span aria-hidden="true">☾</span> <span class="theme-label">Dark mode</span></button>
+      <button class="btn outline small block" id="logout-btn" style="color:#D8DCE8;border-color:rgba(255,255,255,0.25);">Log out</button>
+    </div>
+  </div>
+  <div id="main"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" role="presentation"><div class="modal-box" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"></div></div>
+<div id="toast-host"></div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
