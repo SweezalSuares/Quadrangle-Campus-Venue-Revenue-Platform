@@ -37,9 +37,6 @@ export async function renderDashboard(main) {
     const pending = bookings.filter((b) => b.status === 'pending').length;
     const approved = bookings.filter((b) => b.status === 'approved').length;
     const spend = bookings.filter((b) => b.paymentStatus === 'paid').reduce((s, b) => s + b.price, 0);
-    const recentBookings = [...bookings]
-      .sort((a, b) => new Date(b.createdAt || `${b.date}T00:00:00`) - new Date(a.createdAt || `${a.date}T00:00:00`))
-      .slice(0, 4);
     const { venues } = await api.venues.list({ minCapacity: u.role === 'club' ? 40 : 80 });
 
     main.innerHTML = topbarHtml(`Welcome back, ${u.name.split(' ')[0]}`, 'Your workspace', unread) + `
@@ -50,12 +47,8 @@ export async function renderDashboard(main) {
       <div class="stat-card"><b>${money(spend)}</b><span>Paid to date</span></div>
     </div>
     <div class="section">
-      <div class="section-head"><h3>Your recent bookings</h3><button class="link-btn" onclick="goTo('bookings')">View all →</button></div>
-      <div class="card panel-pad">${recentBookings.length ? recentBookings.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">Nothing booked yet — browse venues to get started.</div>'}</div>
-    </div>
-    <div class="section">
       <div class="section-head"><h3>Recommended for you</h3><span class="small-muted">Matched on capacity fit</span></div>
-      <div class="venue-grid">${venues.slice(0, 3).map((v) => venueCardHtml(v, u)).join('')}</div>
+      <div class="venue-grid">${venues.length ? venues.slice(0, 3).map((v) => venueCardHtml(v, u)).join('') : '<div class="empty-state">No venues are currently available.</div>'}</div>
     </div>`;
     return;
   }
@@ -92,15 +85,11 @@ export async function renderDashboard(main) {
   }
 
   if (u.role === 'admin') {
-    const [summary, { data: revByVenue }, { club, external }, { bookings: recent }] = await Promise.all([
+    const [summary, { data: revByVenue }, { club, external }] = await Promise.all([
       api.analytics.summary(),
       api.analytics.revenueByVenue(),
       api.analytics.roleSplit(),
-      api.bookings.list('all'),
     ]);
-    const latestActivity = [...recent]
-      .sort((a, b) => new Date(b.createdAt || `${b.date}T00:00:00`) - new Date(a.createdAt || `${a.date}T00:00:00`))
-      .slice(0, 6);
     main.innerHTML = topbarHtml('System overview', 'Users, venues, bookings and platform health', unread) + `
     <div class="stat-row">
       <div class="stat-card"><b>${summary.totalUsers}</b><span>Registered users</span></div>
@@ -112,10 +101,7 @@ export async function renderDashboard(main) {
       <div class="card panel-pad"><h3 style="margin-bottom:10px;">Revenue by venue</h3><canvas id="chart-admin-rev" height="180"></canvas></div>
       <div class="card panel-pad"><h3 style="margin-bottom:10px;">Club vs external bookings</h3><canvas id="chart-admin-split" height="180"></canvas></div>
     </div>
-    <div class="section">
-      <div class="section-head"><h3>Recent activity</h3></div>
-      <div class="card panel-pad">${latestActivity.length ? latestActivity.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">No bookings have been made yet.</div>'}</div>
-    </div>`;
+    `;
 
     renderSafeChart('chart-admin-rev', {
       type: 'bar',

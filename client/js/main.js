@@ -9,7 +9,7 @@ import { renderRevenue } from './views/revenue.js';
 import { renderNotifications } from './views/notifications.js';
 import { renderUsers } from './views/users.js';
 import { renderPricing } from './views/pricing.js';
-import { closeModal, showModal, toast } from './ui.js';
+import { closeModal, toast, imgUrl } from './ui.js';
 
 registerViewRenderers({
   dashboard: renderDashboard,
@@ -21,14 +21,6 @@ registerViewRenderers({
   pricing: renderPricing,
 });
 
-function maybeOpenSharedVenue() {
-  const venueId = new URLSearchParams(window.location.search).get('venue');
-  if (!venueId || !state.user || !window.openVenueDetails) return;
-  state.currentView = 'venues';
-  renderSidebarNav();
-  renderView().then(() => window.openVenueDetails(venueId)).catch((err) => toast(err.message));
-}
-
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -36,8 +28,18 @@ function escapeHtml(value) {
 }
 
 async function showPublicSharedVenue(venueId) {
+  const screen = document.getElementById('shared-venue-screen');
+  document.getElementById('landing-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-shell').classList.remove('active');
+  screen.style.display = 'block';
+  screen.innerHTML = '<div class="shared-venue-state">Loading venue details…</div>';
+
   try {
     const { venue } = await api.venues.shared(venueId);
+    const image = venue.imageUrl && /^(https?:|data:image\/)/i.test(venue.imageUrl)
+      ? venue.imageUrl
+      : imgUrl(venue.imageSeed || 'venue');
     const details = [
       ['Category', venue.category],
       ['Capacity', `${venue.capacity} people`],
@@ -46,21 +48,29 @@ async function showPublicSharedVenue(venueId) {
       ['Base price', `${Number(venue.basePrice).toLocaleString('en-IN')} per slot`],
       ['Equipment', venue.equipment?.length ? venue.equipment.join(', ') : 'No additional equipment listed'],
     ];
-    const image = venue.imageUrl && /^(https?:|data:image\/)/i.test(venue.imageUrl)
-      ? venue.imageUrl
-      : `/main1.jpg`;
-    showModal(`
-      <div class="modal-head"><h3 id="modal-title">${escapeHtml(venue.name)}</h3><button class="modal-close" type="button" data-close-modal aria-label="Close venue details">×</button></div>
-      <div class="venue-detail-hero">
-        <img src="${escapeHtml(image)}" alt="${escapeHtml(venue.name)}" onerror="this.src='/main1.jpg'">
-        <div><div class="venue-cat">${escapeHtml(venue.category)}</div><div class="small-muted" style="margin-top:6px;">Capacity ${escapeHtml(venue.capacity)} · ${escapeHtml(venue.location)}</div></div>
-      </div>
-      <div class="venue-detail-list">${details.map(([label, value]) => `<div class="venue-detail-item"><b>${escapeHtml(label)}</b><span>${escapeHtml(value)}</span></div>`).join('')}</div>
-      <div class="shared-venue-actions">
-        <button class="btn brass" type="button" id="share-public-venue">Share venue</button>
-        <button class="btn outline" type="button" id="login-to-book">Log in to book</button>
-      </div>`);
-    document.querySelector('[data-close-modal]').addEventListener('click', window.closeModal);
+    screen.innerHTML = `
+      <header class="shared-venue-header">
+        <a class="landing-brand" href="/" aria-label="Quadrangle home">Quad<span>rangle</span></a>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode"><span aria-hidden="true">☾</span><span class="theme-label">Dark mode</span></button>
+      </header>
+      <article class="shared-venue-content">
+        <img class="shared-venue-image" src="${escapeHtml(image)}" alt="${escapeHtml(venue.name)}" onerror="this.src='/main1.jpg'">
+        <div class="shared-venue-body">
+          <p class="eyebrow">Campus venue</p>
+          <div class="venue-cat">${escapeHtml(venue.category)}</div>
+          <h1>${escapeHtml(venue.name)}</h1>
+          <p class="shared-venue-location">${escapeHtml(venue.location)}</p>
+          <div class="venue-detail-list">${details.map(([label, value]) => `<div class="venue-detail-item"><b>${escapeHtml(label)}</b><span>${escapeHtml(value)}</span></div>`).join('')}</div>
+          <div class="shared-venue-actions">
+            <button class="btn brass" type="button" id="share-public-venue">Share venue</button>
+            <button class="btn outline" type="button" id="login-to-book">Log in to book</button>
+          </div>
+        </div>
+      </article>`;
+
+    screen.querySelector('[data-theme-toggle]').addEventListener('click', () => {
+      setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    });
     document.getElementById('share-public-venue').addEventListener('click', async () => {
       const url = window.location.href;
       try {
@@ -73,14 +83,15 @@ async function showPublicSharedVenue(venueId) {
       }
     });
     document.getElementById('login-to-book').addEventListener('click', () => {
-      window.closeModal();
+      screen.style.display = 'none';
       document.getElementById('landing-screen').style.display = 'none';
       document.getElementById('auth-screen').style.display = 'grid';
       setAuthTab('login');
     });
   } catch (err) {
-    showModal(`<div class="modal-head"><h3 id="modal-title">Shared venue unavailable</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">×</button></div><div class="notice bad">${escapeHtml(err.message)}</div>`);
-    document.querySelector('[data-close-modal]').addEventListener('click', window.closeModal);
+    screen.innerHTML = `
+      <header class="shared-venue-header"><a class="landing-brand" href="/">Quad<span>rangle</span></a></header>
+      <div class="shared-venue-state"><h1>Shared venue unavailable</h1><p>${escapeHtml(err.message)}</p><a class="btn outline" href="/">Back to Quadrangle</a></div>`;
   }
 }
 
@@ -95,7 +106,7 @@ function enterApp() {
   state.currentView = 'dashboard';
   state.currentTab = {};
   renderSidebarNav();
-  renderView().then(maybeOpenSharedVenue);
+  renderView();
 }
 
 function backToLanding() {
@@ -247,6 +258,14 @@ window.closeModal = closeModal;
 
 // If a token is already stored (page refresh), verify it and jump straight in.
 (async function bootstrap() {
+  const venuePathMatch = window.location.pathname.match(/^\/venue\/([^/]+)\/?$/);
+  const sharedVenueId = new URLSearchParams(window.location.search).get('venue')
+    || (venuePathMatch && venuePathMatch[1]);
+  if (sharedVenueId) {
+    await showPublicSharedVenue(sharedVenueId);
+    return;
+  }
+
   if (loadSession()) {
     try {
       const { user } = await api.auth.me();
@@ -255,11 +274,6 @@ window.closeModal = closeModal;
     } catch (_) {
       clearSession();
       backToLanding();
-      const sharedVenueId = new URLSearchParams(window.location.search).get('venue');
-      if (sharedVenueId) await showPublicSharedVenue(sharedVenueId);
     }
-  } else {
-    const sharedVenueId = new URLSearchParams(window.location.search).get('venue');
-    if (sharedVenueId) await showPublicSharedVenue(sharedVenueId);
   }
 })();

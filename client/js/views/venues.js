@@ -16,23 +16,7 @@ function venueImageSource(v) {
 }
 
 function buildVenueShareUrl(venueId) {
-  const url = new URL(window.location.pathname, window.location.origin);
-  url.searchParams.set('venue', venueId);
-  return url.toString();
-}
-
-function buildVenueShareText(v) {
-  const equipment = (v.equipment || []).length ? (v.equipment || []).join(', ') : 'No extra equipment listed';
-  return [
-    `Venue: ${v.name}`,
-    `Category: ${v.category}`,
-    `Location: ${v.location}`,
-    `Capacity: ${v.capacity}`,
-    `In-charge: ${v.incharge}`,
-    `Equipment: ${equipment}`,
-    `Base price: ${money(v.basePrice)} per slot`,
-    `Link: ${buildVenueShareUrl(v._id)}`,
-  ].join('\n');
+  return new URL(`/venue/${encodeURIComponent(venueId)}`, window.location.origin).toString();
 }
 
 export function venueCardHtml(v, u) {
@@ -182,10 +166,9 @@ window.shareVenue = async function shareVenue(venueId) {
   if (!v) return;
 
   const shareUrl = buildVenueShareUrl(v._id);
-  const shareText = buildVenueShareText(v);
   const shareData = {
     title: `${v.name} | Quadrangle Venue`,
-    text: shareText,
+    text: `View venue details for ${v.name} on Quadrangle.`,
     url: shareUrl,
   };
 
