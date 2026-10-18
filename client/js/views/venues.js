@@ -11,7 +11,7 @@ async function unreadCount() {
 }
 
 function venueImageSource(v) {
-  if (v.imageUrl && /^(https?:|data:image\/)/i.test(v.imageUrl)) return v.imageUrl;
+  if (v.imageUrl && (/^(https?:|data:image\/)/i.test(v.imageUrl) || (v.imageUrl.startsWith('/') && !v.imageUrl.startsWith('//')))) return v.imageUrl;
   return imgUrl(v.imageSeed || v.imageUrl || 'venue');
 }
 
@@ -88,15 +88,6 @@ async function applyVenueFilters() {
 window.applyVenueFilters = applyVenueFilters;
 
 /* ---------------- Venue CRUD (manager/admin) ---------------- */
-async function readImageFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Image upload failed.'));
-    reader.readAsDataURL(file);
-  });
-}
-
 window.openVenueEdit = async function openVenueEdit(venueId) {
   let v = { name: '', category: CATEGORIES[0], capacity: 50, location: '', incharge: '', equipment: [], basePrice: 3000, imageSeed: `venue${Date.now()}`, imageUrl: '' };
   if (venueId) {
@@ -118,7 +109,7 @@ window.openVenueEdit = async function openVenueEdit(venueId) {
   <div class="field"><label>Equipment / facilities (comma separated)</label><input id="mv-equip" value="${(v.equipment || []).join(', ')}"></div>
   <div class="field"><label>Image keyword (used to generate a preview photo)</label><input id="mv-img" value="${v.imageSeed || 'venue'}"></div>
   <div class="field"><label>Image URL (optional)</label><input id="mv-image-url" type="url" value="${v.imageUrl || ''}" placeholder="https://example.com/venue.jpg"></div>
-  <div class="field"><label>Or upload an image (optional)</label><input id="mv-image-file" type="file" accept="image/*"></div>
+  <div class="field"><label>Or upload an image (optional, up to 10 MB)</label><input id="mv-image-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></div>
   <button class="btn brass block" id="mv-save">${venueId ? 'Save changes' : 'Add venue'}</button>`);
   document.getElementById('mv-save').addEventListener('click', () => saveVenue(venueId));
 };
@@ -127,15 +118,11 @@ async function saveVenue(venueId) {
   const fileInput = document.getElementById('mv-image-file');
   const urlInput = document.getElementById('mv-image-url');
   const imageSeed = document.getElementById('mv-img').value.trim() || `venue${Date.now()}`;
-  let imageUrl = urlInput ? urlInput.value.trim() : '';
-
-  if (fileInput && fileInput.files && fileInput.files[0]) {
-    try {
-      imageUrl = await readImageFile(fileInput.files[0]);
-    } catch (err) {
-      toast(err.message);
-      return;
-    }
+  const imageFile = fileInput && fileInput.files ? fileInput.files[0] : null;
+  const imageUrl = urlInput ? urlInput.value.trim() : '';
+  if (imageFile && imageFile.size > 10 * 1024 * 1024) {
+    toast('Image must be 10 MB or smaller.');
+    return;
   }
 
   const payload = {
@@ -151,8 +138,8 @@ async function saveVenue(venueId) {
   };
   if (!payload.name) { toast('Give the venue a name first.'); return; }
   try {
-    if (venueId) { await api.venues.update(venueId, payload); toast('Venue updated.'); }
-    else { await api.venues.create(payload); toast('Venue added.'); }
+    if (venueId) { await api.venues.update(venueId, payload, imageFile); toast('Venue updated.'); }
+    else { await api.venues.create(payload, imageFile); toast('Venue added.'); }
     closeModal();
     renderView();
   } catch (err) {

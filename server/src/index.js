@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const { uploadDir } = require('./middleware/venueImageUpload');
 
 const { connectDB } = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
@@ -34,6 +35,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().t
 
 // ---- Static frontend (served from the same server for a one-port setup) ----
 const clientDir = path.join(__dirname, '..', '..', 'client');
+app.use('/uploads', express.static(uploadDir));
 app.use(express.static(clientDir));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();

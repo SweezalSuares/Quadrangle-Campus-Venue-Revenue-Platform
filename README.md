@@ -127,7 +127,8 @@ the sidebar.
 
 **2. Campus Venue Management** — CRUD for venues (manager/admin), capacity,
 location, in-charge person, equipment list, category, preview photo, search +
-category + min-capacity filters.
+category + min-capacity filters. JPEG, PNG, WebP and GIF photos can be uploaded
+up to 10 MB; files are stored under `server/uploads` and served from `/uploads`.
 
 **3. Venue Booking** — search/filter, request/approve/reject/cancel workflow,
 booking history, status badges (pending/approved/rejected/cancelled).
@@ -175,8 +176,8 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
 | POST   | /auth/login                        | public          | Get a JWT |
 | GET    | /auth/me                           | any             | Current user |
 | GET    | /venues                            | any             | List/search/filter venues |
-| POST   | /venues                            | manager, admin  | Create venue |
-| PUT    | /venues/:id                        | manager, admin  | Update venue |
+| POST   | /venues                            | manager, admin  | Create venue; optional multipart `image` file (up to 10 MB) |
+| PUT    | /venues/:id                        | manager, admin  | Update venue; optional multipart `image` file (up to 10 MB) |
 | DELETE | /venues/:id                        | manager, admin  | Remove venue |
 | GET    | /bookings/quote                    | any             | Live AI price + conflict + suggestions |
 | POST   | /bookings                          | any             | Submit a booking request |
@@ -205,5 +206,5 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
   and the Express app was smoke-tested with the database layer mocked out.
   Run `npm run seed && npm start` against your own MongoDB for full end-to-end
   verification.
-- Possible extensions: file uploads for real venue photos, email notifications,
-  a real payment gateway, recurring/multi-day bookings, and calendar export.
+- Possible extensions: email notifications, a real payment gateway,
+  recurring/multi-day bookings, and calendar export.

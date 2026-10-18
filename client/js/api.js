@@ -6,7 +6,8 @@ function getToken() {
 }
 
 async function request(path, { method = 'GET', body, auth = true } = {}) {
-  const headers = { 'Content-Type': 'application/json' };
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
   if (auth) {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -14,7 +15,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   const res = await fetch(BASE + path, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
   });
   let data = null;
   try { data = await res.json(); } catch (_) { /* no body */ }
@@ -24,6 +25,16 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     throw err;
   }
   return data;
+}
+
+function venueBody(payload, imageFile) {
+  if (!imageFile) return payload;
+  const formData = new FormData();
+  Object.entries(payload).forEach(([key, value]) => {
+    formData.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value));
+  });
+  formData.append('image', imageFile);
+  return formData;
 }
 
 export const api = {
@@ -39,8 +50,8 @@ export const api = {
       const q = qs.toString();
       return request(`/venues${q ? `?${q}` : ''}`);
     },
-    create: (payload) => request('/venues', { method: 'POST', body: payload }),
-    update: (id, payload) => request(`/venues/${id}`, { method: 'PUT', body: payload }),
+    create: (payload, imageFile) => request('/venues', { method: 'POST', body: venueBody(payload, imageFile) }),
+    update: (id, payload, imageFile) => request(`/venues/${id}`, { method: 'PUT', body: venueBody(payload, imageFile) }),
     remove: (id) => request(`/venues/${id}`, { method: 'DELETE' }),
   },
   bookings: {

@@ -37,7 +37,7 @@ async function showPublicSharedVenue(venueId) {
 
   try {
     const { venue } = await api.venues.shared(venueId);
-    const image = venue.imageUrl && /^(https?:|data:image\/)/i.test(venue.imageUrl)
+    const image = venue.imageUrl && (/^(https?:|data:image\/)/i.test(venue.imageUrl) || (venue.imageUrl.startsWith('/') && !venue.imageUrl.startsWith('//')))
       ? venue.imageUrl
       : imgUrl(venue.imageSeed || 'venue');
     const details = [

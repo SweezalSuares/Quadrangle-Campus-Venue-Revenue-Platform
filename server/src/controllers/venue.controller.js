@@ -2,6 +2,21 @@ const Venue = require('../models/Venue');
 const Booking = require('../models/Booking');
 const mongoose = require('mongoose');
 
+function getVenuePayload(req) {
+  const payload = { ...req.body };
+  if (typeof payload.equipment === 'string') {
+    try {
+      payload.equipment = JSON.parse(payload.equipment);
+    } catch (err) {
+      const invalidEquipment = new Error('Equipment list must be valid JSON.');
+      invalidEquipment.statusCode = 400;
+      throw invalidEquipment;
+    }
+  }
+  if (req.file) payload.imageUrl = `/uploads/${req.file.filename}`;
+  return payload;
+}
+
 async function getSharedVenue(req, res, next) {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
@@ -47,7 +62,7 @@ async function getVenue(req, res, next) {
 
 async function createVenue(req, res, next) {
   try {
-    const payload = { ...req.body, createdBy: req.user._id };
+    const payload = { ...getVenuePayload(req), createdBy: req.user._id };
     const venue = await Venue.create(payload);
     res.status(201).json({ venue });
   } catch (err) {
@@ -57,7 +72,7 @@ async function createVenue(req, res, next) {
 
 async function updateVenue(req, res, next) {
   try {
-    const venue = await Venue.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const venue = await Venue.findByIdAndUpdate(req.params.id, getVenuePayload(req), { new: true, runValidators: true });
     if (!venue) return res.status(404).json({ message: 'Venue not found.' });
     res.json({ venue });
   } catch (err) {
