@@ -8,7 +8,7 @@ async function getSharedVenue(req, res, next) {
       return res.status(404).json({ message: 'Venue not found.' });
     }
     const venue = await Venue.findById(req.params.id)
-      .select('name category capacity location incharge equipment basePrice imageUrl imageSeed');
+      .select('name description category capacity location incharge equipment basePrice imageUrl imageSeed');
     if (!venue) return res.status(404).json({ message: 'Venue not found.' });
     res.json({ venue });
   } catch (err) {

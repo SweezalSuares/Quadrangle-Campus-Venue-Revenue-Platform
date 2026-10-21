@@ -49,6 +49,10 @@ export const api = {
       return request(`/bookings/quote?${qs.toString()}`);
     },
     list: (status) => request(`/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
+    calendar: (from, to) => {
+      const qs = new URLSearchParams({ from, to });
+      return request(`/bookings/calendar?${qs.toString()}`);
+    },
     create: (payload) => request('/bookings', { method: 'POST', body: payload }),
     setStatus: (id, status) => request(`/bookings/${id}/status`, { method: 'PATCH', body: { status } }),
     pay: (id) => request(`/bookings/${id}/pay`, { method: 'PATCH' }),

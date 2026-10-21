@@ -126,11 +126,21 @@ club, manager, admin), role-based dashboards and navigation, profile shown in
 the sidebar.
 
 **2. Campus Venue Management** — CRUD for venues (manager/admin), capacity,
-location, in-charge person, equipment list, category, preview photo, search +
-category + min-capacity filters.
+location, in-charge person, equipment list, description, category, preview
+photo, search + category + min-capacity filters. Venue image uploads are resized
+and compressed in the browser before being saved.
 
 **3. Venue Booking** — search/filter, request/approve/reject/cancel workflow,
 booking history, status badges (pending/approved/rejected/cancelled).
+
+**3a. Venue-finding assistant & booking calendar** — describe an event's type,
+guest count and required facilities to find matching venues with live time-slot
+availability. The monthly calendar shows active campus reservations by venue,
+date and time; booking purpose and requester details are limited to managers,
+admins and the booking owner.
+
+Venue share links open a standalone public details page and do not restore or
+display the viewer's signed-in account.
 
 **4. AI/ML features** (`pricing.service.js`):
 - **Dynamic pricing** — multiplier built from weekday/weekend, time-of-day slot,
@@ -181,6 +191,7 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
 | GET    | /bookings/quote                    | any             | Live AI price + conflict + suggestions |
 | POST   | /bookings                          | any             | Submit a booking request |
 | GET    | /bookings                          | any (scoped)    | List bookings (own, or all for manager/admin) |
+| GET    | /bookings/calendar?from=&to=          | any             | Active schedule for up to 93 days; private details are role-scoped |
 | PATCH  | /bookings/:id/status                | owner / manager | approve / reject / cancel |
 | PATCH  | /bookings/:id/pay                  | owner / manager | Mark paid |
 | GET    | /bookings/:id/payment-qr           | owner / manager | Payment QR code (data URL) |

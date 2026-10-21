@@ -123,6 +123,54 @@ async function listBookings(req, res, next) {
   }
 }
 
+// GET /api/bookings/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD
+async function calendar(req, res, next) {
+  try {
+    const { from, to } = req.query;
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    const validDate = (value) => {
+      if (!datePattern.test(value || '')) return false;
+      const date = new Date(`${value}T00:00:00Z`);
+      return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+    };
+    if (!validDate(from) || !validDate(to) || from > to) {
+      return res.status(400).json({ message: 'A valid from and to date range is required.' });
+    }
+    if ((new Date(`${to}T00:00:00Z`) - new Date(`${from}T00:00:00Z`)) / 86400000 > 92) {
+      return res.status(400).json({ message: 'Calendar date ranges cannot exceed 93 days.' });
+    }
+
+    const isManager = ['manager', 'admin'].includes(req.user.role);
+    const bookings = await Booking.find({
+      date: { $gte: from, $lte: to },
+      status: { $in: ['pending', 'approved'] },
+    })
+      .populate('venue', 'name category location capacity')
+      .populate('user', 'name')
+      .sort({ date: 1, start: 1 });
+
+    res.json({
+      bookings: bookings.map((booking) => {
+        const isOwner = String(booking.user?._id || booking.user) === String(req.user._id);
+        return {
+          id: booking._id,
+          date: booking.date,
+          start: booking.start,
+          end: booking.end,
+          status: booking.status,
+          venue: booking.venue,
+          ...(isManager || isOwner ? {
+            purpose: booking.purpose,
+            userName: booking.user?.name || '',
+          } : {}),
+        };
+      }),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // PATCH /api/bookings/:id/status   { status: approved|rejected|cancelled }
 async function setStatus(req, res, next) {
   try {
@@ -201,4 +249,4 @@ async function paymentQr(req, res, next) {
   }
 }
 
-module.exports = { quote, createBooking, listBookings, setStatus, markPaid, paymentQr };
+module.exports = { quote, createBooking, listBookings, calendar, setStatus, markPaid, paymentQr };

@@ -15,6 +15,12 @@ function venueImageSource(v) {
   return imgUrl(v.imageSeed || v.imageUrl || 'venue');
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character]);
+}
+
 function buildVenueShareUrl(venueId) {
   const url = new URL(window.location.pathname, window.location.origin);
   url.searchParams.set('venue', venueId);
@@ -27,6 +33,7 @@ function buildVenueShareText(v) {
     `Venue: ${v.name}`,
     `Category: ${v.category}`,
     `Location: ${v.location}`,
+    ...(v.description ? [`Description: ${v.description}`] : []),
     `Capacity: ${v.capacity}`,
     `In-charge: ${v.incharge}`,
     `Equipment: ${equipment}`,
@@ -49,6 +56,7 @@ export function venueCardHtml(v, u) {
         <span>👥 Capacity: ${v.capacity}</span>
         <span>🧑‍💼 In-charge: ${v.incharge}</span>
       </div>
+      ${v.description ? `<p class="venue-card-description">${escapeHtml(v.description)}</p>` : ''}
       <div class="venue-foot">
         <div class="venue-price">${money(v.basePrice)} <small>/ base slot</small></div>
         <div class="venue-actions">
@@ -113,8 +121,50 @@ async function readImageFile(file) {
   });
 }
 
+async function compressImageFile(file) {
+  if (!file.type.startsWith('image/')) throw new Error('Choose a valid image file.');
+  if (file.size > 20 * 1024 * 1024) throw new Error('Choose an image smaller than 20 MB.');
+
+  const imageUrl = URL.createObjectURL(file);
+  let image;
+  try {
+    image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error('This image could not be opened.'));
+      element.src = imageUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+
+  const maxDimension = 1600;
+  const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement('canvas');
+  let width = Math.max(1, Math.round(image.naturalWidth * scale));
+  let height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Image compression is not available in this browser.');
+
+  let blob;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(image, 0, 0, width, height);
+    const quality = [0.82, 0.72, 0.62, 0.52][attempt % 4];
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (!blob) throw new Error('Image compression failed. Try another image.');
+    if (blob.size <= 3 * 1024 * 1024) return readImageFile(blob);
+    if (attempt % 4 === 3) {
+      width = Math.max(1, Math.round(width * 0.8));
+      height = Math.max(1, Math.round(height * 0.8));
+    }
+  }
+  throw new Error('This image is too large to upload. Choose a smaller image.');
+}
+
 window.openVenueEdit = async function openVenueEdit(venueId) {
-  let v = { name: '', category: CATEGORIES[0], capacity: 50, location: '', incharge: '', equipment: [], basePrice: 3000, imageSeed: `venue${Date.now()}`, imageUrl: '' };
+  let v = { name: '', description: '', category: CATEGORIES[0], capacity: 50, location: '', incharge: '', equipment: [], basePrice: 3000, imageSeed: `venue${Date.now()}`, imageUrl: '' };
   if (venueId) {
     const { venues } = await api.venues.list();
     v = venues.find((x) => x._id === venueId) || v;
@@ -122,6 +172,7 @@ window.openVenueEdit = async function openVenueEdit(venueId) {
   showModal(`
   <div class="modal-head"><h3>${venueId ? 'Edit venue' : 'Add new venue'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
   <div class="field"><label>Venue name</label><input id="mv-name" value="${v.name}"></div>
+  <div class="field"><label for="mv-description">Description</label><textarea id="mv-description" rows="3" maxlength="1200" placeholder="Describe the venue, its atmosphere and what it works well for.">${escapeHtml(v.description || '')}</textarea></div>
   <div class="grid2">
     <div class="field"><label>Category</label><select id="mv-cat">${CATEGORIES.map((c) => `<option ${c === v.category ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
     <div class="field"><label>Capacity</label><input id="mv-cap" type="number" value="${v.capacity}"></div>
@@ -134,7 +185,7 @@ window.openVenueEdit = async function openVenueEdit(venueId) {
   <div class="field"><label>Equipment / facilities (comma separated)</label><input id="mv-equip" value="${(v.equipment || []).join(', ')}"></div>
   <div class="field"><label>Image keyword (used to generate a preview photo)</label><input id="mv-img" value="${v.imageSeed || 'venue'}"></div>
   <div class="field"><label>Image URL (optional)</label><input id="mv-image-url" type="url" value="${v.imageUrl || ''}" placeholder="https://example.com/venue.jpg"></div>
-  <div class="field"><label>Or upload an image (optional)</label><input id="mv-image-file" type="file" accept="image/*"></div>
+  <div class="field"><label>Or upload an image (optional)</label><input id="mv-image-file" type="file" accept="image/*"><small class="small-muted">Images are resized and compressed before upload.</small></div>
   <button class="btn brass block" id="mv-save">${venueId ? 'Save changes' : 'Add venue'}</button>`);
   document.getElementById('mv-save').addEventListener('click', () => saveVenue(venueId));
 };
@@ -147,7 +198,7 @@ async function saveVenue(venueId) {
 
   if (fileInput && fileInput.files && fileInput.files[0]) {
     try {
-      imageUrl = await readImageFile(fileInput.files[0]);
+      imageUrl = await compressImageFile(fileInput.files[0]);
     } catch (err) {
       toast(err.message);
       return;
@@ -156,6 +207,7 @@ async function saveVenue(venueId) {
 
   const payload = {
     name: document.getElementById('mv-name').value.trim(),
+    description: document.getElementById('mv-description').value.trim(),
     category: document.getElementById('mv-cat').value,
     capacity: parseInt(document.getElementById('mv-cap').value, 10) || 0,
     location: document.getElementById('mv-loc').value.trim(),
@@ -212,6 +264,7 @@ window.openVenueDetails = async function openVenueDetails(venueId) {
 
   const details = [
     { label: 'Category', value: v.category },
+    { label: 'Description', value: v.description || 'No description provided' },
     { label: 'Capacity', value: `${v.capacity} people` },
     { label: 'Location', value: v.location },
     { label: 'In-charge', value: v.incharge },
@@ -230,7 +283,7 @@ window.openVenueDetails = async function openVenueDetails(venueId) {
       </div>
     </div>
     <div class="venue-detail-list">
-      ${details.map((item) => `<div class="venue-detail-item"><b>${item.label}</b><span>${item.value}</span></div>`).join('')}
+      ${details.map((item) => `<div class="venue-detail-item"><b>${escapeHtml(item.label)}</b><span>${escapeHtml(item.value)}</span></div>`).join('')}
     </div>
     <div style="display:flex;gap:8px; margin-top:18px; flex-wrap:wrap;">
       <button class="btn brass" onclick="shareVenue('${v._id}')">Share venue</button>
@@ -253,7 +306,7 @@ window.deleteVenue = async function deleteVenue(venueId) {
 /* ---------------- Booking flow ---------------- */
 let draft = {};
 
-window.openBooking = async function openBooking(venueId) {
+window.openBooking = async function openBooking(venueId, requestedSlot = {}) {
   let v;
   try {
     const { venues } = await api.venues.list();
@@ -266,7 +319,13 @@ window.openBooking = async function openBooking(venueId) {
     toast('This venue is no longer available for booking.');
     return;
   }
-  draft = { venueId, date: todayStr(), start: '18:00', end: '20:00', purpose: '' };
+  draft = {
+    venueId,
+    date: requestedSlot.date || todayStr(),
+    start: requestedSlot.start || '18:00',
+    end: requestedSlot.end || '20:00',
+    purpose: '',
+  };
   await renderBookingModal(v);
 }
 

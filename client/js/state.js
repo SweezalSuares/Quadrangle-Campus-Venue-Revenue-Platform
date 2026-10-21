@@ -45,10 +45,10 @@ export const CATEGORIES = [
 ];
 
 export const NAV = {
-  external: [['dashboard', 'Dashboard'], ['venues', 'Browse Venues'], ['bookings', 'My Bookings'], ['notifications', 'Notifications']],
-  club: [['dashboard', 'Dashboard'], ['venues', 'Browse Venues'], ['bookings', 'My Bookings'], ['notifications', 'Notifications']],
-  manager: [['dashboard', 'Dashboard'], ['venues', 'Venues'], ['bookings', 'Bookings'], ['revenue', 'Revenue & Analytics'], ['notifications', 'Notifications']],
-  admin: [['dashboard', 'Dashboard'], ['venues', 'Venues'], ['bookings', 'Bookings'], ['users', 'Users'], ['revenue', 'Revenue & Analytics'], ['pricing', 'Pricing Rules'], ['notifications', 'Notifications']],
+  external: [['dashboard', 'Dashboard'], ['assistant', 'Find a venue'], ['calendar', 'Booking calendar'], ['venues', 'Browse Venues'], ['bookings', 'My Bookings'], ['notifications', 'Notifications']],
+  club: [['dashboard', 'Dashboard'], ['assistant', 'Find a venue'], ['calendar', 'Booking calendar'], ['venues', 'Browse Venues'], ['bookings', 'My Bookings'], ['notifications', 'Notifications']],
+  manager: [['dashboard', 'Dashboard'], ['assistant', 'Find a venue'], ['calendar', 'Booking calendar'], ['venues', 'Venues'], ['bookings', 'Bookings'], ['revenue', 'Revenue & Analytics'], ['notifications', 'Notifications']],
+  admin: [['dashboard', 'Dashboard'], ['assistant', 'Find a venue'], ['calendar', 'Booking calendar'], ['venues', 'Venues'], ['bookings', 'Bookings'], ['users', 'Users'], ['revenue', 'Revenue & Analytics'], ['pricing', 'Pricing Rules'], ['notifications', 'Notifications']],
 };
 
 export function roleLabel(r) {

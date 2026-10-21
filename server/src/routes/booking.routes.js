@@ -4,6 +4,7 @@ const { protect } = require('../middleware/auth');
 
 router.use(protect);
 router.get('/quote', ctrl.quote);
+router.get('/calendar', ctrl.calendar);
 router.get('/', ctrl.listBookings);
 router.post('/', ctrl.createBooking);
 router.patch('/:id/status', ctrl.setStatus);

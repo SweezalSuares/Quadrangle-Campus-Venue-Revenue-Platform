@@ -9,7 +9,9 @@ import { renderRevenue } from './views/revenue.js';
 import { renderNotifications } from './views/notifications.js';
 import { renderUsers } from './views/users.js';
 import { renderPricing } from './views/pricing.js';
-import { closeModal, showModal, toast } from './ui.js';
+import { renderVenueAssistant } from './views/assistant.js';
+import { renderCalendar } from './views/calendar.js';
+import { closeModal, toast } from './ui.js';
 
 registerViewRenderers({
   dashboard: renderDashboard,
@@ -19,15 +21,9 @@ registerViewRenderers({
   notifications: renderNotifications,
   users: renderUsers,
   pricing: renderPricing,
+  assistant: renderVenueAssistant,
+  calendar: renderCalendar,
 });
-
-function maybeOpenSharedVenue() {
-  const venueId = new URLSearchParams(window.location.search).get('venue');
-  if (!venueId || !state.user || !window.openVenueDetails) return;
-  state.currentView = 'venues';
-  renderSidebarNav();
-  renderView().then(() => window.openVenueDetails(venueId)).catch((err) => toast(err.message));
-}
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({
@@ -36,6 +32,12 @@ function escapeHtml(value) {
 }
 
 async function showPublicSharedVenue(venueId) {
+  document.getElementById('landing-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-shell').classList.remove('active');
+  const screen = document.getElementById('shared-venue-screen');
+  screen.style.display = 'block';
+  screen.innerHTML = '<div class="shared-venue-loading">Loading venue details…</div>';
   try {
     const { venue } = await api.venues.shared(venueId);
     const details = [
@@ -49,38 +51,21 @@ async function showPublicSharedVenue(venueId) {
     const image = venue.imageUrl && /^(https?:|data:image\/)/i.test(venue.imageUrl)
       ? venue.imageUrl
       : `/main1.jpg`;
-    showModal(`
-      <div class="modal-head"><h3 id="modal-title">${escapeHtml(venue.name)}</h3><button class="modal-close" type="button" data-close-modal aria-label="Close venue details">×</button></div>
-      <div class="venue-detail-hero">
-        <img src="${escapeHtml(image)}" alt="${escapeHtml(venue.name)}" onerror="this.src='/main1.jpg'">
-        <div><div class="venue-cat">${escapeHtml(venue.category)}</div><div class="small-muted" style="margin-top:6px;">Capacity ${escapeHtml(venue.capacity)} · ${escapeHtml(venue.location)}</div></div>
-      </div>
-      <div class="venue-detail-list">${details.map(([label, value]) => `<div class="venue-detail-item"><b>${escapeHtml(label)}</b><span>${escapeHtml(value)}</span></div>`).join('')}</div>
-      <div class="shared-venue-actions">
-        <button class="btn brass" type="button" id="share-public-venue">Share venue</button>
-        <button class="btn outline" type="button" id="login-to-book">Log in to book</button>
-      </div>`);
-    document.querySelector('[data-close-modal]').addEventListener('click', window.closeModal);
-    document.getElementById('share-public-venue').addEventListener('click', async () => {
-      const url = window.location.href;
-      try {
-        if (navigator.share) await navigator.share({ title: `${venue.name} | Quadrangle`, text: `View ${venue.name} on Quadrangle.`, url });
-        else if (navigator.clipboard) await navigator.clipboard.writeText(url);
-        else throw new Error('Sharing is unavailable in this browser.');
-        toast(navigator.share ? 'Venue link shared.' : 'Venue link copied.');
-      } catch (err) {
-        if (err.name !== 'AbortError') toast(err.message || 'Unable to share venue details.');
-      }
-    });
-    document.getElementById('login-to-book').addEventListener('click', () => {
-      window.closeModal();
-      document.getElementById('landing-screen').style.display = 'none';
-      document.getElementById('auth-screen').style.display = 'grid';
-      setAuthTab('login');
-    });
+    screen.innerHTML = `
+      <header class="shared-venue-header"><a class="landing-brand" href="/">Quad<span>rangle</span></a><span>Venue details</span></header>
+      <main class="shared-venue-content">
+        <article class="shared-venue-card card">
+          <img class="shared-venue-image" src="${escapeHtml(image)}" alt="${escapeHtml(venue.name)}" onerror="this.src='/main1.jpg'">
+          <div class="shared-venue-body">
+            <div class="venue-cat">${escapeHtml(venue.category)}</div>
+            <h1>${escapeHtml(venue.name)}</h1>
+            ${venue.description ? `<p class="shared-venue-description">${escapeHtml(venue.description)}</p>` : ''}
+            <div class="venue-detail-list">${details.map(([label, value]) => `<div class="venue-detail-item"><b>${escapeHtml(label)}</b><span>${escapeHtml(value)}</span></div>`).join('')}</div>
+          </div>
+        </article>
+      </main>`;
   } catch (err) {
-    showModal(`<div class="modal-head"><h3 id="modal-title">Shared venue unavailable</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">×</button></div><div class="notice bad">${escapeHtml(err.message)}</div>`);
-    document.querySelector('[data-close-modal]').addEventListener('click', window.closeModal);
+    screen.innerHTML = `<header class="shared-venue-header"><a class="landing-brand" href="/">Quad<span>rangle</span></a><span>Venue details</span></header><main class="shared-venue-content"><div class="notice bad">${escapeHtml(err.message || 'This shared venue is unavailable.')}</div></main>`;
   }
 }
 
@@ -95,7 +80,7 @@ function enterApp() {
   state.currentView = 'dashboard';
   state.currentTab = {};
   renderSidebarNav();
-  renderView().then(maybeOpenSharedVenue);
+  renderView();
 }
 
 function backToLanding() {
@@ -247,6 +232,11 @@ window.closeModal = closeModal;
 
 // If a token is already stored (page refresh), verify it and jump straight in.
 (async function bootstrap() {
+  const sharedVenueId = new URLSearchParams(window.location.search).get('venue');
+  if (sharedVenueId) {
+    await showPublicSharedVenue(sharedVenueId);
+    return;
+  }
   if (loadSession()) {
     try {
       const { user } = await api.auth.me();
@@ -255,11 +245,6 @@ window.closeModal = closeModal;
     } catch (_) {
       clearSession();
       backToLanding();
-      const sharedVenueId = new URLSearchParams(window.location.search).get('venue');
-      if (sharedVenueId) await showPublicSharedVenue(sharedVenueId);
     }
-  } else {
-    const sharedVenueId = new URLSearchParams(window.location.search).get('venue');
-    if (sharedVenueId) await showPublicSharedVenue(sharedVenueId);
   }
 })();

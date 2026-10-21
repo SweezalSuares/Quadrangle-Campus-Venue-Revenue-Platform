@@ -8,6 +8,7 @@ const CATEGORIES = [
 const venueSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    description: { type: String, trim: true, maxlength: 1200, default: '' },
     category: { type: String, enum: CATEGORIES, required: true },
     capacity: { type: Number, required: true, min: 1 },
     location: { type: String, required: true, trim: true },
