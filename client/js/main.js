@@ -92,9 +92,20 @@ function backToLanding() {
 
 const setAuthTab = mountAuth(() => enterApp());
 
-function setTheme(theme) {
+let themeTransitionTimer;
+
+function setTheme(theme, animate = false) {
   const isDark = theme === 'dark';
-  document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+  const root = document.documentElement;
+  window.clearTimeout(themeTransitionTimer);
+  root.classList.toggle('theme-transition', animate);
+  root.dataset.theme = isDark ? 'dark' : 'light';
+  if (animate) {
+    themeTransitionTimer = window.setTimeout(() => {
+      root.classList.remove('theme-transition');
+      themeTransitionTimer = undefined;
+    }, 350);
+  }
   try {
     localStorage.setItem('quadrangle_theme', isDark ? 'dark' : 'light');
   } catch (_) {
@@ -122,7 +133,7 @@ try {
 setTheme(savedTheme);
 document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
   button.addEventListener('click', () => {
-    setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true);
   });
 });
 
