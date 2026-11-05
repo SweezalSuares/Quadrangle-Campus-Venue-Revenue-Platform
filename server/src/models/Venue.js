@@ -5,6 +5,14 @@ const CATEGORIES = [
   'Classroom', 'Outdoor Lawn', 'Conference Room', 'Amphitheatre',
 ];
 
+const coordinatesSchema = new mongoose.Schema(
+  {
+    lat: { type: Number, min: -90, max: 90, required: true },
+    lng: { type: Number, min: -180, max: 180, required: true },
+  },
+  { _id: false }
+);
+
 const venueSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -12,6 +20,7 @@ const venueSchema = new mongoose.Schema(
     category: { type: String, enum: CATEGORIES, required: true },
     capacity: { type: Number, required: true, min: 1 },
     location: { type: String, required: true, trim: true },
+    coordinates: { type: coordinatesSchema, default: undefined },
     incharge: { type: String, required: true, trim: true },
     equipment: { type: [String], default: [] },
     basePrice: { type: Number, required: true, min: 0 },

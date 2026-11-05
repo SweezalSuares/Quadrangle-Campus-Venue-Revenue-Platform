@@ -4,6 +4,12 @@ import { topbarHtml, money, fmtDate, imgUrl, todayStr } from '../ui.js';
 import { bookingRowHtml } from './bookings.js';
 import { venueCardHtml } from './venues.js';
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character]);
+}
+
 async function unreadCount() {
   try {
     const { notifications } = await api.notifications.list();
@@ -92,12 +98,17 @@ export async function renderDashboard(main) {
   }
 
   if (u.role === 'admin') {
-    const [summary, { data: revByVenue }, { club, external }, { bookings: recent }] = await Promise.all([
+    const [summary, { data: revByVenue }, { club, external }, { bookings: recent }, { data: utilization }] = await Promise.all([
       api.analytics.summary(),
       api.analytics.revenueByVenue(),
       api.analytics.roleSplit(),
       api.bookings.list('all'),
+      api.analytics.utilization(),
     ]);
+    const forecastRows = utilization
+      .flatMap((venue) => (venue.slotForecast || []).map((slot) => ({ venue: venue.name, ...slot })))
+      .sort((a, b) => Number(b.underutilized) - Number(a.underutilized) ||
+        a.utilizationPct - b.utilizationPct || a.predictedBookings - b.predictedBookings);
     const latestActivity = [...recent]
       .sort((a, b) => new Date(b.createdAt || `${b.date}T00:00:00`) - new Date(a.createdAt || `${a.date}T00:00:00`))
       .slice(0, 6);
@@ -116,6 +127,14 @@ export async function renderDashboard(main) {
       <div class="section-head"><h3>Recent activity</h3></div>
       <div class="card panel-pad">${latestActivity.length ? latestActivity.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">No bookings have been made yet.</div>'}</div>
     </div>`;
+    main.insertAdjacentHTML('beforeend', `
+    <div class="section">
+      <div class="section-head"><h3>Venue utilization prediction</h3><span class="small-muted">Historical use and estimated demand for the next 4 weeks</span></div>
+      <p class="small-muted" style="margin:-6px 0 12px;">Uses the last 12 weeks of pending and approved reservations. Utilization assumes one bookable reservation per venue, time window and day.</p>
+      <div class="card panel-pad"><div class="table-scroll"><table><thead><tr><th>Venue</th><th>Time window</th><th>Bookings · 12 weeks</th><th>Utilization</th><th>Next 4 weeks</th><th>Outlook</th></tr></thead><tbody>
+      ${forecastRows.length ? forecastRows.map((row) => `<tr><td>${escapeHtml(row.venue)}</td><td>${escapeHtml(row.label)}</td><td>${row.historicalBookings}</td><td>${row.utilizationPct}%</td><td>${row.predictedBookings} bookings (${row.predictedUtilizationPct}%)</td><td><span class="badge ${row.demand}">${row.underutilized ? 'Underused · ' : ''}${row.demand} demand</span></td></tr>`).join('') : '<tr><td colspan="6"><div class="empty-state">No venue history is available to forecast yet.</div></td></tr>'}
+      </tbody></table></div></div>
+    </div>`);
 
     renderSafeChart('chart-admin-rev', {
       type: 'bar',

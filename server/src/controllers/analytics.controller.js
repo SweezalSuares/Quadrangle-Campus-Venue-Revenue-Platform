@@ -30,12 +30,18 @@ async function summary(req, res, next) {
 
 async function revenueByVenue(req, res, next) {
   try {
-    const venues = await Venue.find();
-    const bookings = await Booking.find({ paymentStatus: 'paid' });
+    const [venues, revenues] = await Promise.all([
+      Venue.find().select('name'),
+      Booking.aggregate([
+        { $match: { paymentStatus: 'paid' } },
+        { $group: { _id: '$venue', revenue: { $sum: '$price' } } },
+      ]),
+    ]);
+    const revenueById = new Map(revenues.map((item) => [String(item._id), item.revenue]));
     const data = venues.map((v) => ({
       venueId: v._id,
       name: v.name,
-      revenue: bookings.filter((b) => String(b.venue) === String(v._id)).reduce((s, b) => s + b.price, 0),
+      revenue: revenueById.get(String(v._id)) || 0,
     }));
     res.json({ data });
   } catch (err) {
@@ -63,19 +69,23 @@ async function categorySplit(req, res, next) {
 async function weeklyVolume(req, res, next) {
   try {
     const bookings = await Booking.find();
-    const now = new Date();
+    const today = new Date();
+    const currentWeekStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    currentWeekStart.setUTCDate(currentWeekStart.getUTCDate() - ((currentWeekStart.getUTCDay() + 6) % 7));
     const labels = [];
     const counts = [];
-    for (let w = -5; w <= 0; w += 1) {
-      labels.push(w === 0 ? 'This wk' : `W${w}`);
-      counts.push(0);
+    for (let index = 0; index < 6; index += 1) {
+      const start = new Date(currentWeekStart);
+      start.setUTCDate(start.getUTCDate() - (5 - index) * 7);
+      const end = new Date(start);
+      end.setUTCDate(end.getUTCDate() + 7);
+      labels.push(start.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: 'UTC' }));
+      counts.push(bookings.filter((booking) => {
+        if (booking.status === 'rejected' || booking.status === 'cancelled') return false;
+        const date = booking.date;
+        return date >= start.toISOString().slice(0, 10) && date < end.toISOString().slice(0, 10);
+      }).length);
     }
-    bookings.forEach((b) => {
-      const d = new Date(`${b.date}T00:00:00`);
-      const diffW = Math.round((d - now) / (1000 * 3600 * 24 * 7));
-      const idx = diffW + 5;
-      if (idx >= 0 && idx < 6) counts[idx] += 1;
-    });
     res.json({ labels, counts });
   } catch (err) {
     next(err);
@@ -99,14 +109,16 @@ async function utilization(req, res, next) {
     const bookings = await Booking.find();
     const data = venues.map((v) => {
       const venueBookings = bookings.filter((b) => String(b.venue) === String(v._id));
-      const activeCount = venueBookings.filter((b) => b.status !== 'rejected' && b.status !== 'cancelled').length;
+      const forecast = pricing.utilizationForecast(venueBookings);
+      const activeCount = forecast.reduce((sum, slot) => sum + slot.historicalBookings, 0);
       const today = new Date().toISOString().slice(0, 10);
       return {
         venueId: v._id,
         name: v.name,
         bookingCount: activeCount,
-        utilizationPct: pricing.utilizationPercent(activeCount),
+        utilizationPct: Math.min(100, Math.round((activeCount / 252) * 100)),
         demand: pricing.demandLabel(venueBookings, today),
+        slotForecast: forecast,
       };
     }).sort((a, b) => b.utilizationPct - a.utilizationPct);
     res.json({ data });

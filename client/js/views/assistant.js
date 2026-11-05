@@ -102,6 +102,63 @@ export async function renderVenueAssistant(main) {
   document.getElementById('assistant-form').addEventListener('submit', searchVenues);
 }
 
+export function setAssistantWidgetVisible(visible) {
+  const root = document.getElementById('assistant-widget-root');
+  if (!root) return;
+  root.hidden = !visible;
+  if (!visible) {
+    const panel = document.getElementById('assistant-widget-panel');
+    const toggle = document.getElementById('assistant-widget-toggle');
+    panel.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+}
+
+export function mountAssistantWidget() {
+  const toggle = document.getElementById('assistant-widget-toggle');
+  const panel = document.getElementById('assistant-widget-panel');
+  const form = document.getElementById('assistant-widget-form');
+  const close = document.getElementById('assistant-widget-close');
+  const response = document.getElementById('assistant-widget-response');
+  const dateInput = document.getElementById('assistant-widget-date');
+  if (!toggle || !panel || !form || !close || !response || !dateInput) return;
+
+  dateInput.value = todayStr();
+  dateInput.min = todayStr();
+  const setOpen = (open) => {
+    panel.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+    if (open) document.getElementById('assistant-widget-query').focus();
+  };
+  toggle.addEventListener('click', () => setOpen(panel.hidden));
+  close.addEventListener('click', () => setOpen(false));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !panel.hidden) setOpen(false);
+  });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const query = document.getElementById('assistant-widget-query').value.trim();
+    const date = dateInput.value;
+    const start = document.getElementById('assistant-widget-start').value;
+    const end = document.getElementById('assistant-widget-end').value;
+    if (end <= start) {
+      response.innerHTML = '<div class="notice bad">Choose an end time after the start time.</div>';
+      return;
+    }
+
+    response.innerHTML = '<div class="loading-state">Checking campus spaces…</div>';
+    try {
+      const [venueData, bookingData] = await Promise.all([
+        api.venues.list(),
+        api.bookings.calendar(date, date),
+      ]);
+      renderResults(response, venueData.venues, bookingData.bookings, findRequirements(query), date, start, end);
+    } catch (err) {
+      response.innerHTML = `<div class="notice bad">${escapeHtml(err.message || 'Unable to find venues right now.')}</div>`;
+    }
+  });
+}
+
 async function searchVenues(event) {
   event.preventDefault();
   const query = document.getElementById('assistant-query').value.trim();

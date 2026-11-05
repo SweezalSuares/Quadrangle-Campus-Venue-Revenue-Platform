@@ -53,12 +53,7 @@
         </div>
       </div>
       <div class="landing-hero-media">
-        <video class="landing-hero-video" id="landing-hero-video" autoplay muted loop playsinline preload="metadata" poster="/main1.jpg" aria-label="Campus auditorium and event spaces">
-          <source src="/audi%20venue.mp4" type="video/mp4">
-        </video>
-        <div class="hero-video-shade"></div>
-        <div class="hero-video-caption"><span class="availability-dot"></span> Space for what’s next</div>
-        <button class="hero-video-toggle" id="hero-video-toggle" type="button" aria-pressed="true" aria-label="Pause campus video">Ⅱ</button>
+        <img class="campus-illustration" src="/campus-3d.svg" alt="Isometric miniature campus with six colorful university buildings, an auditorium, sports field, gardens and winding paths">
       </div>
     </section>
 
@@ -139,6 +134,10 @@
   <button class="auth-back" id="auth-back" type="button">← Back to Quadrangle</button>
   <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode"><span aria-hidden="true">☾</span><span class="theme-label">Dark mode</span></button>
   <div id="auth-visual">
+    <video class="auth-bg-video" autoplay muted loop playsinline preload="metadata" poster="/main1.jpg" aria-hidden="true">
+      <source src="/audi%20venue.mp4" type="video/mp4">
+    </video>
+    <div class="auth-visual-shade" aria-hidden="true"></div>
     <div>
       <div class="brand-mark">Quad<span>rangle</span></div>
       <div class="auth-headline" style="margin-top:70px;">Every empty hour on campus is a booking someone else needs — or revenue you're leaving on the table.</div>
@@ -207,6 +206,25 @@
 <div id="shared-venue-screen" style="display:none;" aria-live="polite"></div>
 <div class="modal-overlay" id="modal-overlay" role="presentation"><div class="modal-box" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"></div></div>
 <div id="toast-host"></div>
+<div id="assistant-widget-root" class="assistant-widget-root" hidden>
+  <button id="assistant-widget-toggle" class="assistant-widget-toggle" type="button" aria-expanded="false" aria-controls="assistant-widget-panel" aria-label="Open AI venue assistant">
+    <span aria-hidden="true">✦</span><span>Venue assistant</span>
+  </button>
+  <section id="assistant-widget-panel" class="assistant-widget-panel" aria-label="AI venue assistant" hidden>
+    <div class="assistant-widget-head"><div><strong>Venue assistant</strong><span>Find a space that fits your event</span></div><button id="assistant-widget-close" type="button" aria-label="Close assistant">×</button></div>
+    <form id="assistant-widget-form" class="assistant-widget-form">
+      <label for="assistant-widget-query">What do you need?</label>
+      <textarea id="assistant-widget-query" rows="2" placeholder="A seminar hall for 80 with a projector" required></textarea>
+      <div class="assistant-widget-fields">
+        <input id="assistant-widget-date" type="date" aria-label="Event date" required>
+        <input id="assistant-widget-start" type="time" aria-label="Start time" value="10:00" required>
+        <input id="assistant-widget-end" type="time" aria-label="End time" value="12:00" required>
+      </div>
+      <button class="btn brass block" type="submit">Find available venues</button>
+    </form>
+    <div id="assistant-widget-response" class="assistant-widget-response" aria-live="polite">Availability-aware suggestions will appear here.</div>
+  </section>
+</div>
 
 <script type="module" src="/js/main.js"></script>
 </body>

@@ -2,6 +2,8 @@ const Venue = require('../models/Venue');
 const Booking = require('../models/Booking');
 const mongoose = require('mongoose');
 
+const CAMPUS_CENTER = { lat: 12.9337799, lng: 77.6051605 };
+
 async function getSharedVenue(req, res, next) {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
@@ -11,6 +13,27 @@ async function getSharedVenue(req, res, next) {
       .select('name description category capacity location incharge equipment basePrice imageUrl imageSeed');
     if (!venue) return res.status(404).json({ message: 'Venue not found.' });
     res.json({ venue });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function mapVenues(req, res, next) {
+  try {
+    const venues = await Venue.find()
+      .select('name category location capacity coordinates')
+      .sort({ createdAt: 1 });
+    res.json({
+      venues: venues.map((venue) => ({
+        _id: venue._id,
+        name: venue.name,
+        category: venue.category,
+        location: venue.location,
+        capacity: venue.capacity,
+        coordinates: venue.coordinates || CAMPUS_CENTER,
+        approximate: !venue.coordinates,
+      })),
+    });
   } catch (err) {
     next(err);
   }
@@ -76,4 +99,4 @@ async function deleteVenue(req, res, next) {
   }
 }
 
-module.exports = { getSharedVenue, listVenues, getVenue, createVenue, updateVenue, deleteVenue };
+module.exports = { getSharedVenue, mapVenues, listVenues, getVenue, createVenue, updateVenue, deleteVenue };

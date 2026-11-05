@@ -9,7 +9,7 @@ import { renderRevenue } from './views/revenue.js';
 import { renderNotifications } from './views/notifications.js';
 import { renderUsers } from './views/users.js';
 import { renderPricing } from './views/pricing.js';
-import { renderVenueAssistant } from './views/assistant.js';
+import { mountAssistantWidget, renderVenueAssistant, setAssistantWidgetVisible } from './views/assistant.js';
 import { renderCalendar } from './views/calendar.js';
 import { closeModal, toast } from './ui.js';
 
@@ -77,6 +77,7 @@ function enterApp() {
   document.getElementById('landing-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app-shell').classList.add('active');
+  setAssistantWidgetVisible(true);
   state.currentView = 'dashboard';
   state.currentTab = {};
   renderSidebarNav();
@@ -87,10 +88,12 @@ function backToLanding() {
   document.getElementById('app-shell').classList.remove('active');
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('landing-screen').style.display = 'block';
+  setAssistantWidgetVisible(false);
   window.scrollTo(0, 0);
 }
 
 const setAuthTab = mountAuth(() => enterApp());
+mountAssistantWidget();
 
 let themeTransitionTimer;
 
@@ -191,42 +194,19 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
   revealTargets.forEach((element) => element.classList.add('is-visible'));
 }
 
-const heroVideo = document.getElementById('landing-hero-video');
-const videoToggle = document.getElementById('hero-video-toggle');
-videoToggle.addEventListener('click', () => {
-  if (heroVideo.paused) {
-    heroVideo.play().then(() => {
-      videoToggle.textContent = 'Ⅱ';
-      videoToggle.setAttribute('aria-label', 'Pause campus video');
-      videoToggle.setAttribute('aria-pressed', 'true');
-    }).catch(() => toast('The campus video could not be played.'));
-  } else {
-    heroVideo.pause();
-    videoToggle.textContent = '▶';
-    videoToggle.setAttribute('aria-label', 'Play campus video');
-    videoToggle.setAttribute('aria-pressed', 'false');
-  }
-});
-
 const heroMedia = document.querySelector('.landing-hero-media');
 if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
   heroMedia.addEventListener('pointermove', (event) => {
     const bounds = heroMedia.getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width - 0.5;
     const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-    heroMedia.style.setProperty('--tilt-x', `${x * 2}deg`);
-    heroMedia.style.setProperty('--tilt-y', `${-y * 2}deg`);
+    heroMedia.style.setProperty('--tilt-x', `${x * 1.5}deg`);
+    heroMedia.style.setProperty('--tilt-y', `${-y * 1.5}deg`);
   });
   heroMedia.addEventListener('pointerleave', () => {
     heroMedia.style.setProperty('--tilt-x', '0deg');
     heroMedia.style.setProperty('--tilt-y', '0deg');
   });
-}
-if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  heroVideo.pause();
-  videoToggle.textContent = '▶';
-  videoToggle.setAttribute('aria-label', 'Play campus video');
-  videoToggle.setAttribute('aria-pressed', 'false');
 }
 
 window.setTimeout(() => document.getElementById('landing-loader').classList.add('is-hidden'), 650);

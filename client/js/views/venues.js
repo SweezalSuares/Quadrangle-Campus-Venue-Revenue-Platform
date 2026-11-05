@@ -164,7 +164,7 @@ async function compressImageFile(file) {
 }
 
 window.openVenueEdit = async function openVenueEdit(venueId) {
-  let v = { name: '', description: '', category: CATEGORIES[0], capacity: 50, location: '', incharge: '', equipment: [], basePrice: 3000, imageSeed: `venue${Date.now()}`, imageUrl: '' };
+  let v = { name: '', description: '', category: CATEGORIES[0], capacity: 50, location: '', coordinates: null, incharge: '', equipment: [], basePrice: 3000, imageSeed: `venue${Date.now()}`, imageUrl: '' };
   if (venueId) {
     const { venues } = await api.venues.list();
     v = venues.find((x) => x._id === venueId) || v;
@@ -178,6 +178,11 @@ window.openVenueEdit = async function openVenueEdit(venueId) {
     <div class="field"><label>Capacity</label><input id="mv-cap" type="number" value="${v.capacity}"></div>
   </div>
   <div class="field"><label>Location</label><input id="mv-loc" value="${v.location}"></div>
+  <div class="grid2">
+    <div class="field"><label for="mv-lat">Map latitude</label><input id="mv-lat" type="number" step="any" min="-90" max="90" value="${v.coordinates?.lat ?? ''}" placeholder="12.9338"></div>
+    <div class="field"><label for="mv-lng">Map longitude</label><input id="mv-lng" type="number" step="any" min="-180" max="180" value="${v.coordinates?.lng ?? ''}" placeholder="77.6052"></div>
+  </div>
+  <p class="small-muted">Add both coordinates to show this venue on the campus geo map.</p>
   <div class="grid2">
     <div class="field"><label>Incharge person</label><input id="mv-incharge" value="${v.incharge}"></div>
     <div class="field"><label>Base price (₹, per slot)</label><input id="mv-price" type="number" value="${v.basePrice}"></div>
@@ -217,6 +222,13 @@ async function saveVenue(venueId) {
     imageUrl,
     imageSeed,
   };
+  const lat = document.getElementById('mv-lat').value;
+  const lng = document.getElementById('mv-lng').value;
+  if (Boolean(lat) !== Boolean(lng)) {
+    toast('Enter both map coordinates, or leave both blank.');
+    return;
+  }
+  payload.coordinates = lat && lng ? { lat: Number(lat), lng: Number(lng) } : null;
   if (!payload.name) { toast('Give the venue a name first.'); return; }
   try {
     if (venueId) { await api.venues.update(venueId, payload); toast('Venue updated.'); }

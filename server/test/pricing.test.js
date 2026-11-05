@@ -121,10 +121,37 @@ console.log('utilizationPercent');
 check('caps at 100%', () => assert.strictEqual(pricing.utilizationPercent(999, 20), 100));
 check('computes a straightforward percentage', () => assert.strictEqual(pricing.utilizationPercent(5, 20), 25));
 
+console.log('utilizationForecast');
+check('forecasts the next four weeks from recent booking trends', () => {
+  const forecast = pricing.utilizationForecast([
+    { date: '2026-09-28', start: '09:00', status: 'approved' },
+    { date: '2026-09-27', start: '10:00', status: 'pending' },
+    { date: '2026-09-20', start: '11:00', status: 'approved' },
+    { date: '2026-08-31', start: '09:00', status: 'approved' },
+    { date: '2026-07-10', start: '08:00', status: 'approved' },
+    { date: '2026-09-29', start: '10:00', status: 'cancelled' },
+    { date: '2026-10-02', start: '10:00', status: 'approved' },
+  ], new Date('2026-10-01T12:00:00Z'));
+  const morning = forecast.find((slot) => slot.slot === 'morning');
+  assert.strictEqual(morning.historicalBookings, 5);
+  assert.strictEqual(morning.predictedBookings, 4);
+  assert.strictEqual(morning.demand, 'medium');
+  assert.strictEqual(morning.underutilized, true);
+});
+check('returns a low-demand forecast when there is no booking history', () => {
+  const forecast = pricing.utilizationForecast([], new Date('2026-10-01T12:00:00Z'));
+  assert.strictEqual(forecast.length, 3);
+  assert.ok(forecast.every((slot) => slot.predictedBookings === 0 && slot.demand === 'low'));
+});
+
 check('venues accept an optional imageUrl field', () => {
   const imageField = Venue.schema.path('imageUrl');
   assert.ok(imageField, 'imageUrl should exist on the Venue schema');
   assert.strictEqual(imageField.instance, 'String');
+});
+check('venues accept optional map coordinates', () => {
+  assert.ok(Venue.schema.path('coordinates.lat'));
+  assert.ok(Venue.schema.path('coordinates.lng'));
 });
 
 console.log(`\n${passed} check(s) passed.`);

@@ -21,16 +21,16 @@ const DEMO_USERS = [
 ];
 
 const DEMO_VENUES = [
-  { name: 'Centre for Performing Arts — Auditorium', category: 'Auditorium', capacity: 500, location: 'Block 1, Ground Floor', incharge: 'Prof. Anita Rao', equipment: ['Stage lighting', 'Line array PA', '4K projector', 'Green rooms'], basePrice: 15000, imageSeed: 'auditorium1' },
-  { name: 'Seminar Hall A', category: 'Seminar Hall', capacity: 120, location: 'Block 3, 2nd Floor', incharge: 'Mr. Suresh Iyer', equipment: ['Podium', 'Mic set', 'Projector'], basePrice: 4500, imageSeed: 'seminar1' },
-  { name: 'Seminar Hall B', category: 'Seminar Hall', capacity: 80, location: 'Block 3, 2nd Floor', incharge: 'Mr. Suresh Iyer', equipment: ['Podium', 'Whiteboard', 'Projector'], basePrice: 3200, imageSeed: 'seminar2' },
-  { name: 'Basketball Court', category: 'Sports Ground', capacity: 200, location: 'Sports Complex', incharge: "Coach D'Souza", equipment: ['Floodlights', 'Scoreboard'], basePrice: 6000, imageSeed: 'court1' },
-  { name: 'Main Football Ground', category: 'Sports Ground', capacity: 1000, location: 'East Campus', incharge: "Coach D'Souza", equipment: ['Floodlights', 'Turf crew'], basePrice: 18000, imageSeed: 'ground1' },
-  { name: 'AI & Robotics Lab', category: 'Lab', capacity: 40, location: 'Block 5, 3rd Floor', incharge: 'Dr. Meenal Joshi', equipment: ['GPU workstations', 'Robotics kits'], basePrice: 5000, imageSeed: 'lab1' },
-  { name: 'Smart Classroom 204', category: 'Classroom', capacity: 60, location: 'Block 2, 2nd Floor', incharge: 'Ms. Farah Khan', equipment: ['Smartboard', 'AC', 'Podium'], basePrice: 2500, imageSeed: 'class1' },
-  { name: 'Open Air Amphitheatre', category: 'Amphitheatre', capacity: 800, location: 'Central Quad', incharge: 'Prof. Anita Rao', equipment: ['Stage', 'PA system'], basePrice: 12000, imageSeed: 'amphi1' },
-  { name: 'Admin Block Conference Room', category: 'Conference Room', capacity: 25, location: 'Admin Block, 1st Floor', incharge: 'Mr. Vinod Nair', equipment: ['Video conferencing', 'Whiteboard'], basePrice: 2800, imageSeed: 'conf1' },
-  { name: 'Central Lawn', category: 'Outdoor Lawn', capacity: 1500, location: 'Front Campus', incharge: 'Mr. Vinod Nair', equipment: ['Power points', 'Water access'], basePrice: 9000, imageSeed: 'lawn1' },
+  { name: 'Centre for Performing Arts — Auditorium', category: 'Auditorium', capacity: 500, location: 'Block 1, Ground Floor', coordinates: { lat: 12.9341, lng: 77.6058 }, incharge: 'Prof. Anita Rao', equipment: ['Stage lighting', 'Line array PA', '4K projector', 'Green rooms'], basePrice: 15000, imageSeed: 'auditorium1' },
+  { name: 'Seminar Hall A', category: 'Seminar Hall', capacity: 120, location: 'Block 3, 2nd Floor', coordinates: { lat: 12.9347, lng: 77.6051 }, incharge: 'Mr. Suresh Iyer', equipment: ['Podium', 'Mic set', 'Projector'], basePrice: 4500, imageSeed: 'seminar1' },
+  { name: 'Seminar Hall B', category: 'Seminar Hall', capacity: 80, location: 'Block 3, 2nd Floor', coordinates: { lat: 12.9348, lng: 77.6052 }, incharge: 'Mr. Suresh Iyer', equipment: ['Podium', 'Whiteboard', 'Projector'], basePrice: 3200, imageSeed: 'seminar2' },
+  { name: 'Basketball Court', category: 'Sports Ground', capacity: 200, location: 'Sports Complex', coordinates: { lat: 12.9332, lng: 77.6063 }, incharge: "Coach D'Souza", equipment: ['Floodlights', 'Scoreboard'], basePrice: 6000, imageSeed: 'court1' },
+  { name: 'Main Football Ground', category: 'Sports Ground', capacity: 1000, location: 'East Campus', coordinates: { lat: 12.9338, lng: 77.6068 }, incharge: "Coach D'Souza", equipment: ['Floodlights', 'Turf crew'], basePrice: 18000, imageSeed: 'ground1' },
+  { name: 'AI & Robotics Lab', category: 'Lab', capacity: 40, location: 'Block 5, 3rd Floor', coordinates: { lat: 12.9352, lng: 77.6048 }, incharge: 'Dr. Meenal Joshi', equipment: ['GPU workstations', 'Robotics kits'], basePrice: 5000, imageSeed: 'lab1' },
+  { name: 'Smart Classroom 204', category: 'Classroom', capacity: 60, location: 'Block 2, 2nd Floor', coordinates: { lat: 12.9345, lng: 77.6047 }, incharge: 'Ms. Farah Khan', equipment: ['Smartboard', 'AC', 'Podium'], basePrice: 2500, imageSeed: 'class1' },
+  { name: 'Open Air Amphitheatre', category: 'Amphitheatre', capacity: 800, location: 'Central Quad', coordinates: { lat: 12.9337, lng: 77.6054 }, incharge: 'Prof. Anita Rao', equipment: ['Stage', 'PA system'], basePrice: 12000, imageSeed: 'amphi1' },
+  { name: 'Admin Block Conference Room', category: 'Conference Room', capacity: 25, location: 'Admin Block, 1st Floor', coordinates: { lat: 12.9355, lng: 77.6054 }, incharge: 'Mr. Vinod Nair', equipment: ['Video conferencing', 'Whiteboard'], basePrice: 2800, imageSeed: 'conf1' },
+  { name: 'Central Lawn', category: 'Outdoor Lawn', capacity: 1500, location: 'Front Campus', coordinates: { lat: 12.9329, lng: 77.6044 }, incharge: 'Mr. Vinod Nair', equipment: ['Power points', 'Water access'], basePrice: 9000, imageSeed: 'lawn1' },
 ];
 
 function isoDate(d) { return d.toISOString().slice(0, 10); }

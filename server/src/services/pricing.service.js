@@ -102,6 +102,47 @@ function utilizationPercent(bookingCount, assumedMonthlySlots = 20) {
   return Math.min(100, Math.round((bookingCount / assumedMonthlySlots) * 100));
 }
 
+function utilizationForecast(bookings, asOfDate = new Date()) {
+  const slots = [
+    { key: 'morning', label: 'Morning · 08:00–12:00' },
+    { key: 'afternoon', label: 'Afternoon · 12:00–17:00' },
+    { key: 'evening', label: 'Evening · 17:00–21:00' },
+  ];
+  const today = Date.UTC(asOfDate.getUTCFullYear(), asOfDate.getUTCMonth(), asOfDate.getUTCDate());
+  const counts = Object.fromEntries(slots.map(({ key }) => [key, { history: 0, recent: 0, previous: 0 }]));
+
+  bookings.forEach((booking) => {
+    if (booking.status === 'rejected' || booking.status === 'cancelled' || !booking.start) return;
+    const bookingDate = new Date(`${booking.date}T00:00:00Z`);
+    if (!Number.isFinite(bookingDate.getTime())) return;
+    const ageDays = Math.floor((today - bookingDate.getTime()) / 86400000);
+    if (ageDays < 0 || ageDays >= 84) return;
+    const slot = counts[slotType(booking.start)];
+    slot.history += 1;
+    if (ageDays < 28) slot.recent += 1;
+    else if (ageDays < 56) slot.previous += 1;
+  });
+
+  return slots.map(({ key, label }) => {
+    const slot = counts[key];
+    const recentPerWeek = slot.recent / 4;
+    const previousPerWeek = slot.previous / 4;
+    const predictedBookings = Math.max(0, Math.round((recentPerWeek + (recentPerWeek - previousPerWeek) * 0.25) * 4));
+    const utilizationPct = Math.round((slot.history / 84) * 100);
+    const predictedUtilizationPct = Math.min(100, Math.round((predictedBookings / 28) * 100));
+    return {
+      slot: key,
+      label,
+      historicalBookings: slot.history,
+      utilizationPct,
+      predictedBookings,
+      predictedUtilizationPct,
+      demand: predictedBookings >= 8 ? 'high' : predictedBookings >= 3 ? 'medium' : 'low',
+      underutilized: utilizationPct < 20,
+    };
+  });
+}
+
 module.exports = {
   toMin,
   fmtMin,
@@ -113,4 +154,5 @@ module.exports = {
   findConflict,
   suggestSlots,
   utilizationPercent,
+  utilizationForecast,
 };

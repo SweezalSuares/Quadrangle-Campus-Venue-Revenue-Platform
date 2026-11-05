@@ -3,6 +3,7 @@ const ctrl = require('../controllers/venue.controller');
 const { protect, authorize } = require('../middleware/auth');
 
 router.get('/share/:id', ctrl.getSharedVenue);
+router.get('/map', ctrl.mapVenues);
 router.use(protect);
 router.get('/', ctrl.listVenues);
 router.get('/:id', ctrl.getVenue);

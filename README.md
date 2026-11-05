@@ -142,6 +142,10 @@ admins and the booking owner.
 Venue share links open a standalone public details page and do not restore or
 display the viewer's signed-in account.
 
+The venue assistant is also available from a floating launcher in the lower
+right of the signed-in app. It checks venue requirements and schedule conflicts
+before offering booking actions.
+
 **4. AI/ML features** (`pricing.service.js`):
 - **Dynamic pricing** — multiplier built from weekday/weekend, time-of-day slot,
   recent demand at that venue, and category popularity; weights are editable by
@@ -154,6 +158,10 @@ display the viewer's signed-in account.
   venues by category match then price.
 - **Demand prediction / labels** — `low` / `medium` / `high` per venue, based on
   bookings in the surrounding week, shown on venue cards and the utilisation table.
+- **Venue utilization prediction** — the admin dashboard compares venue
+  time-of-day usage across the previous 12 weeks and estimates demand for the
+  next four weeks. The estimate excludes rejected/cancelled reservations and
+  assumes one bookable reservation per venue, time window and day.
 - **AI utilisation insight** — the manager dashboard surfaces the
   worst-performing venue as a plain-language nudge.
 
@@ -172,6 +180,11 @@ utilisation table with demand outlook per venue.
 **12. Admin & System Management** — user list with booking counts, venue CRUD,
 booking oversight, and a live-editable pricing-rules panel.
 
+**Campus map & hero illustration** — the public landing-page hero uses an
+original, pastel isometric campus illustration with six buildings, gardens and
+sports grounds. Venue coordinates remain available for the campus geo-map
+endpoint; map pins are not shown in the hero.
+
 ---
 
 ## 4. API overview
@@ -185,6 +198,7 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
 | POST   | /auth/login                        | public          | Get a JWT |
 | GET    | /auth/me                           | any             | Current user |
 | GET    | /venues                            | any             | List/search/filter venues |
+| GET    | /venues/map                        | public          | Minimal venue data for the campus map |
 | POST   | /venues                            | manager, admin  | Create venue |
 | PUT    | /venues/:id                        | manager, admin  | Update venue |
 | DELETE | /venues/:id                        | manager, admin  | Remove venue |
@@ -199,7 +213,7 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
 | PATCH  | /notifications/read-all            | any             | Mark all read |
 | GET    | /users                             | admin           | All users + booking counts |
 | GET/PUT| /pricing-rules                     | admin           | View/edit the AI pricing weights |
-| GET    | /analytics/summary, /revenue-by-venue, /category-split, /weekly-volume, /role-split, /utilization | manager, admin | Dashboard data |
+| GET    | /analytics/summary, /revenue-by-venue, /category-split, /weekly-volume, /role-split, /utilization | manager, admin | Dashboard data and time-slot forecasts |
 
 ---
 
