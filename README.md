@@ -126,25 +126,9 @@ club, manager, admin), role-based dashboards and navigation, profile shown in
 the sidebar.
 
 **2. Campus Venue Management** — CRUD for venues (manager/admin), capacity,
-location, in-charge person, equipment list, description, category, preview
-photo, search + category + min-capacity filters. Venue image uploads are resized
-and compressed in the browser before being saved.
 
 **3. Venue Booking** — search/filter, request/approve/reject/cancel workflow,
 booking history, status badges (pending/approved/rejected/cancelled).
-
-**3a. Venue-finding assistant & booking calendar** — describe an event's type,
-guest count and required facilities to find matching venues with live time-slot
-availability. The monthly calendar shows active campus reservations by venue,
-date and time; booking purpose and requester details are limited to managers,
-admins and the booking owner.
-
-Venue share links open a standalone public details page and do not restore or
-display the viewer's signed-in account.
-
-The venue assistant is also available from a floating launcher in the lower
-right of the signed-in app. It checks venue requirements and schedule conflicts
-before offering booking actions.
 
 **4. AI/ML features** (`pricing.service.js`):
 - **Dynamic pricing** — multiplier built from weekday/weekend, time-of-day slot,
@@ -158,10 +142,6 @@ before offering booking actions.
   venues by category match then price.
 - **Demand prediction / labels** — `low` / `medium` / `high` per venue, based on
   bookings in the surrounding week, shown on venue cards and the utilisation table.
-- **Venue utilization prediction** — the admin dashboard compares venue
-  time-of-day usage across the previous 12 weeks and estimates demand for the
-  next four weeks. The estimate excludes rejected/cancelled reservations and
-  assumes one bookable reservation per venue, time window and day.
 - **AI utilisation insight** — the manager dashboard surfaces the
   worst-performing venue as a plain-language nudge.
 
@@ -180,11 +160,6 @@ utilisation table with demand outlook per venue.
 **12. Admin & System Management** — user list with booking counts, venue CRUD,
 booking oversight, and a live-editable pricing-rules panel.
 
-**Campus map & hero illustration** — the public landing-page hero uses an
-original, pastel isometric campus illustration with six buildings, gardens and
-sports grounds. Venue coordinates remain available for the campus geo-map
-endpoint; map pins are not shown in the hero.
-
 ---
 
 ## 4. API overview
@@ -198,14 +173,12 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
 | POST   | /auth/login                        | public          | Get a JWT |
 | GET    | /auth/me                           | any             | Current user |
 | GET    | /venues                            | any             | List/search/filter venues |
-| GET    | /venues/map                        | public          | Minimal venue data for the campus map |
-| POST   | /venues                            | manager, admin  | Create venue |
-| PUT    | /venues/:id                        | manager, admin  | Update venue |
+
 | DELETE | /venues/:id                        | manager, admin  | Remove venue |
 | GET    | /bookings/quote                    | any             | Live AI price + conflict + suggestions |
 | POST   | /bookings                          | any             | Submit a booking request |
 | GET    | /bookings                          | any (scoped)    | List bookings (own, or all for manager/admin) |
-| GET    | /bookings/calendar?from=&to=          | any             | Active schedule for up to 93 days; private details are role-scoped |
+
 | PATCH  | /bookings/:id/status                | owner / manager | approve / reject / cancel |
 | PATCH  | /bookings/:id/pay                  | owner / manager | Mark paid |
 | GET    | /bookings/:id/payment-qr           | owner / manager | Payment QR code (data URL) |
@@ -213,7 +186,7 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
 | PATCH  | /notifications/read-all            | any             | Mark all read |
 | GET    | /users                             | admin           | All users + booking counts |
 | GET/PUT| /pricing-rules                     | admin           | View/edit the AI pricing weights |
-| GET    | /analytics/summary, /revenue-by-venue, /category-split, /weekly-volume, /role-split, /utilization | manager, admin | Dashboard data and time-slot forecasts |
+
 
 ---
 
@@ -230,5 +203,4 @@ All routes are under `/api` and (except `/auth/register`, `/auth/login`,
   and the Express app was smoke-tested with the database layer mocked out.
   Run `npm run seed && npm start` against your own MongoDB for full end-to-end
   verification.
-- Possible extensions: file uploads for real venue photos, email notifications,
-  a real payment gateway, recurring/multi-day bookings, and calendar export.
+

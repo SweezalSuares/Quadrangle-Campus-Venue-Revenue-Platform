@@ -51,8 +51,13 @@ export async function renderRevenue(main) {
     <div class="card panel-pad"><h3 style="margin-bottom:10px;">Club vs external bookings</h3><canvas id="chart-split2" height="200"></canvas></div>
   </div>
   <div class="section">
+
     <div class="section-head"><h3>Venue utilisation</h3><span class="small-muted">Last 12 weeks · up to 3 bookable time windows per day</span></div>
     <div class="card panel-pad"><table><thead><tr><th>Venue</th><th>Bookings · 12 weeks</th><th>Utilisation</th><th>AI demand outlook</th></tr></thead><tbody>
+
+    <div class="section-head"><h3>Venue utilisation</h3><span class="small-muted">% of assumed monthly bookable slots filled</span></div>
+    <div class="card panel-pad"><table><thead><tr><th>Venue</th><th>Bookings on record</th><th>Utilisation</th><th>AI demand outlook</th></tr></thead><tbody>
+
     ${sortedUtil.map((x) => `<tr><td>${x.name}</td><td>${x.bookingCount}</td><td>${x.utilizationPct}%</td><td><span class="badge ${x.demand}">${x.demand}</span></td></tr>`).join('')}
     </tbody></table></div>
   </div>`;

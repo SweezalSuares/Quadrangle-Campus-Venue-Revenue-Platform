@@ -4,12 +4,6 @@ import { topbarHtml, money, fmtDate, imgUrl, todayStr } from '../ui.js';
 import { bookingRowHtml } from './bookings.js';
 import { venueCardHtml } from './venues.js';
 
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[character]);
-}
-
 async function unreadCount() {
   try {
     const { notifications } = await api.notifications.list();
@@ -43,9 +37,6 @@ export async function renderDashboard(main) {
     const pending = bookings.filter((b) => b.status === 'pending').length;
     const approved = bookings.filter((b) => b.status === 'approved').length;
     const spend = bookings.filter((b) => b.paymentStatus === 'paid').reduce((s, b) => s + b.price, 0);
-    const recentBookings = [...bookings]
-      .sort((a, b) => new Date(b.createdAt || `${b.date}T00:00:00`) - new Date(a.createdAt || `${a.date}T00:00:00`))
-      .slice(0, 4);
     const { venues } = await api.venues.list({ minCapacity: u.role === 'club' ? 40 : 80 });
 
     main.innerHTML = topbarHtml(`Welcome back, ${u.name.split(' ')[0]}`, 'Your workspace', unread) + `
@@ -56,12 +47,8 @@ export async function renderDashboard(main) {
       <div class="stat-card"><b>${money(spend)}</b><span>Paid to date</span></div>
     </div>
     <div class="section">
-      <div class="section-head"><h3>Your recent bookings</h3><button class="link-btn" onclick="goTo('bookings')">View all →</button></div>
-      <div class="card panel-pad">${recentBookings.length ? recentBookings.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">Nothing booked yet — browse venues to get started.</div>'}</div>
-    </div>
-    <div class="section">
       <div class="section-head"><h3>Recommended for you</h3><span class="small-muted">Matched on capacity fit</span></div>
-      <div class="venue-grid">${venues.slice(0, 3).map((v) => venueCardHtml(v, u)).join('')}</div>
+      <div class="venue-grid">${venues.length ? venues.slice(0, 3).map((v) => venueCardHtml(v, u)).join('') : '<div class="empty-state">No venues are currently available.</div>'}</div>
     </div>`;
     return;
   }
@@ -98,20 +85,11 @@ export async function renderDashboard(main) {
   }
 
   if (u.role === 'admin') {
-    const [summary, { data: revByVenue }, { club, external }, { bookings: recent }, { data: utilization }] = await Promise.all([
+    const [summary, { data: revByVenue }, { club, external }] = await Promise.all([
       api.analytics.summary(),
       api.analytics.revenueByVenue(),
       api.analytics.roleSplit(),
-      api.bookings.list('all'),
-      api.analytics.utilization(),
     ]);
-    const forecastRows = utilization
-      .flatMap((venue) => (venue.slotForecast || []).map((slot) => ({ venue: venue.name, ...slot })))
-      .sort((a, b) => Number(b.underutilized) - Number(a.underutilized) ||
-        a.utilizationPct - b.utilizationPct || a.predictedBookings - b.predictedBookings);
-    const latestActivity = [...recent]
-      .sort((a, b) => new Date(b.createdAt || `${b.date}T00:00:00`) - new Date(a.createdAt || `${a.date}T00:00:00`))
-      .slice(0, 6);
     main.innerHTML = topbarHtml('System overview', 'Users, venues, bookings and platform health', unread) + `
     <div class="stat-row">
       <div class="stat-card"><b>${summary.totalUsers}</b><span>Registered users</span></div>
@@ -123,18 +101,7 @@ export async function renderDashboard(main) {
       <div class="card panel-pad"><h3 style="margin-bottom:10px;">Revenue by venue</h3><canvas id="chart-admin-rev" height="180"></canvas></div>
       <div class="card panel-pad"><h3 style="margin-bottom:10px;">Club vs external bookings</h3><canvas id="chart-admin-split" height="180"></canvas></div>
     </div>
-    <div class="section">
-      <div class="section-head"><h3>Recent activity</h3></div>
-      <div class="card panel-pad">${latestActivity.length ? latestActivity.map((b) => bookingRowHtml(b, u)).join('<hr class="div">') : '<div class="empty-state">No bookings have been made yet.</div>'}</div>
-    </div>`;
-    main.insertAdjacentHTML('beforeend', `
-    <div class="section">
-      <div class="section-head"><h3>Venue utilization prediction</h3><span class="small-muted">Historical use and estimated demand for the next 4 weeks</span></div>
-      <p class="small-muted" style="margin:-6px 0 12px;">Uses the last 12 weeks of pending and approved reservations. Utilization assumes one bookable reservation per venue, time window and day.</p>
-      <div class="card panel-pad"><div class="table-scroll"><table><thead><tr><th>Venue</th><th>Time window</th><th>Bookings · 12 weeks</th><th>Utilization</th><th>Next 4 weeks</th><th>Outlook</th></tr></thead><tbody>
-      ${forecastRows.length ? forecastRows.map((row) => `<tr><td>${escapeHtml(row.venue)}</td><td>${escapeHtml(row.label)}</td><td>${row.historicalBookings}</td><td>${row.utilizationPct}%</td><td>${row.predictedBookings} bookings (${row.predictedUtilizationPct}%)</td><td><span class="badge ${row.demand}">${row.underutilized ? 'Underused · ' : ''}${row.demand} demand</span></td></tr>`).join('') : '<tr><td colspan="6"><div class="empty-state">No venue history is available to forecast yet.</div></td></tr>'}
-      </tbody></table></div></div>
-    </div>`);
+    `;
 
     renderSafeChart('chart-admin-rev', {
       type: 'bar',
