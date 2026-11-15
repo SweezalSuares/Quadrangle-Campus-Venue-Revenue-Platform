@@ -7,7 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/styles.css">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.12.1/model-viewer.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script type="module"
+    src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
+    </script>
 </head>
 <body>
 
@@ -53,7 +57,27 @@
         </div>
       </div>
       <div class="landing-hero-media">
-        <img class="campus-illustration" src="/campus-3d.svg" alt="Isometric miniature campus with six colorful university buildings, an auditorium, sports field, gardens and winding paths">
+        <model-viewer
+          class="campus-illustration"
+          src="/christ_university_3d_model.glb"
+          alt="3D model of the Christ University campus"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+          camera-controls
+          camera-orbit="35deg 76deg 7m"
+          field-of-view="28deg"
+          min-field-of-view="18deg"
+          max-field-of-view="38deg"
+          auto-rotate
+          auto-rotate-delay="800"
+          rotation-per-second="12deg"
+          shadow-intensity="1"
+          environment-image="neutral"
+          exposure="1.25"
+          scale="0.72 0.72 0.72"
+          interaction-prompt="none"
+          loading="eager">
+        </model-viewer>
       </div>
     </section>
 
