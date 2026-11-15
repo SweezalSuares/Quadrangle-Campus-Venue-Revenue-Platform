@@ -3,25 +3,13 @@ import { state } from '../state.js';
 import { topbarHtml, money, fmtDate, imgUrl, todayStr } from '../ui.js';
 import { bookingRowHtml } from './bookings.js';
 import { venueCardHtml } from './venues.js';
+import { renderSafeChart } from '../chart.js';
 
 async function unreadCount() {
   try {
     const { notifications } = await api.notifications.list();
     return notifications.filter((n) => !n.read).length;
   } catch (_) { return 0; }
-}
-
-function renderSafeChart(canvasId, config, fallbackText) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  if (typeof Chart === 'undefined') {
-    canvas.replaceWith(Object.assign(document.createElement('div'), {
-      className: 'notice info',
-      textContent: fallbackText,
-    }));
-    return;
-  }
-  new Chart(canvas, config);
 }
 
 export async function renderDashboard(main) {

@@ -33,7 +33,7 @@ quadrangle/
 │   │   │   └── qrcode.service.js      Builds the UPI-style payment QR code
 │   │   ├── controllers/           One file per resource
 │   │   ├── routes/                One file per resource, mounted under /api/*
-│   │   ├── seed/seed.js           Demo users, venues, pricing rules & sample bookings
+│   │   ├── seed/seed.js           Clears venue/booking data and ensures demo accounts
 │   │   └── index.js               App entry point — also serves the frontend statically
 │   ├── test/pricing.test.js   Plain-Node assertion tests for the AI logic (no DB needed)
 │   ├── package.json
@@ -88,9 +88,11 @@ CLIENT_ORIGIN=http://localhost:5000
 npm run seed
 ```
 
-This clears and repopulates the database with 10 venues, 4 demo accounts (one per
-role), a pricing-rules document, and ~20 sample bookings spread across the last
-six weeks so the analytics dashboards have something to chart.
+This clears venues, bookings (all statuses) and notifications while preserving
+users and existing pricing rules. A default pricing-rules document and the four
+demo accounts below are created only when missing. Add your own venues after
+running the seed command. The listed demo passwords apply only to accounts
+newly created by the seed; existing account passwords are unchanged.
 
 | Role              | Email                          | Password   |
 |-------------------|---------------------------------|------------|

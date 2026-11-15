@@ -1,24 +1,12 @@
 import { api } from '../api.js';
 import { topbarHtml, money } from '../ui.js';
+import { renderSafeChart } from '../chart.js';
 
 async function unreadCount() {
   try {
     const { notifications } = await api.notifications.list();
     return notifications.filter((n) => !n.read).length;
   } catch (_) { return 0; }
-}
-
-function renderSafeChart(canvasId, config, fallbackText) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  if (typeof Chart === 'undefined') {
-    canvas.replaceWith(Object.assign(document.createElement('div'), {
-      className: 'notice info',
-      textContent: fallbackText,
-    }));
-    return;
-  }
-  new Chart(canvas, config);
 }
 
 export async function renderRevenue(main) {
@@ -51,14 +39,9 @@ export async function renderRevenue(main) {
     <div class="card panel-pad"><h3 style="margin-bottom:10px;">Club vs external bookings</h3><canvas id="chart-split2" height="200"></canvas></div>
   </div>
   <div class="section">
-
-    <div class="section-head"><h3>Venue utilisation</h3><span class="small-muted">Last 12 weeks · up to 3 bookable time windows per day</span></div>
-    <div class="card panel-pad"><table><thead><tr><th>Venue</th><th>Bookings · 12 weeks</th><th>Utilisation</th><th>AI demand outlook</th></tr></thead><tbody>
-
     <div class="section-head"><h3>Venue utilisation</h3><span class="small-muted">% of assumed monthly bookable slots filled</span></div>
     <div class="card panel-pad"><table><thead><tr><th>Venue</th><th>Bookings on record</th><th>Utilisation</th><th>AI demand outlook</th></tr></thead><tbody>
-
-    ${sortedUtil.map((x) => `<tr><td>${x.name}</td><td>${x.bookingCount}</td><td>${x.utilizationPct}%</td><td><span class="badge ${x.demand}">${x.demand}</span></td></tr>`).join('')}
+    ${sortedUtil.length ? sortedUtil.map((x) => `<tr><td>${x.name}</td><td>${x.bookingCount}</td><td>${x.utilizationPct}%</td><td><span class="badge ${x.demand}">${x.demand}</span></td></tr>`).join('') : '<tr><td colspan="4" class="empty-state">No venue utilisation data yet. Add venues and bookings to populate this table.</td></tr>'}
     </tbody></table></div>
   </div>`;
 
